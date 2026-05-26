@@ -14,10 +14,14 @@ interface SendBody {
  * with Strapi (internal traffic). We forward the body and the SSO cookies
  * (`jwt`, `id`, ...) so the main server authenticates registered users as today.
  *
- * For charter/guest users (no `jwt`) we instead set `isSer: true` so the main
- * server uses its service token — strictly bounded by the allow-list in
- * sendPolicy. The client-supplied `isSer` is never trusted; we always recompute
- * it from the resolved user.
+ * For charter/guest users (no `jwt`) we set `isSer: true` so the main server
+ * uses its service token — strictly bounded by the allow-list in sendPolicy.
+ * The client-supplied `isSer` is never trusted; we always recompute it.
+ *
+ * For service-token requests we also inject `arg.__identity`, the verified
+ * identity from the SSO cookies. The main server must treat this as the source
+ * of truth for author/voter identity and ignore client-supplied author fields,
+ * so charter/guest users cannot impersonate anyone.
  */
 export const POST: RequestHandler = async ({ request, fetch, locals }) => {
 	const target = env.MAIN_APP_URL;
@@ -42,15 +46,28 @@ export const POST: RequestHandler = async ({ request, fetch, locals }) => {
 		throw error(403, 'Operation not permitted for this user');
 	}
 
-	const forwarded = JSON.stringify({ ...body, isSer: decision.useService });
+	const arg: Record<string, unknown> = { ...(body.data?.arg ?? {}) };
+	if (decision.useService) {
+		arg.__identity = {
+			externalId: locals.user.id,
+			name: locals.user.name,
+			email: locals.user.email,
+			type: locals.user.type
+		};
+	}
+
+	const headers: Record<string, string> = {
+		'Content-Type': 'application/json',
+		cookie: request.headers.get('cookie') ?? ''
+	};
+	if (env.PROXY_SHARED_SECRET) {
+		headers['x-consensus-secret'] = env.PROXY_SHARED_SECRET;
+	}
 
 	const upstream = await fetch(`${target.replace(/\/$/, '')}/api/send`, {
 		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			cookie: request.headers.get('cookie') ?? ''
-		},
-		body: forwarded
+		headers,
+		body: JSON.stringify({ ...body, isSer: decision.useService, data: { queId, arg } })
 	});
 
 	const text = await upstream.text();
