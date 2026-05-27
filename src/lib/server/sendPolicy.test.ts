@@ -44,6 +44,10 @@ describe('authorizeSend', () => {
 
 	it('restricts guests to read-only operations', () => {
 		expect(authorizeSend(guest, '39GetNegotiation')).toEqual({ allowed: true, useService: true });
+		expect(authorizeSend(guest, 'GetNegotiationByToken')).toEqual({
+			allowed: true,
+			useService: true
+		});
 		expect(authorizeSend(guest, 'ListLocalNegotiations')).toEqual({
 			allowed: true,
 			useService: true

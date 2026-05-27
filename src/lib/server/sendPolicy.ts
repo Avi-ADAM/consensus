@@ -16,6 +16,7 @@ export interface SendDecision {
  */
 const GUEST_ALLOWED: ReadonlySet<string> = new Set([
 	'39GetNegotiation',
+	'GetNegotiationByToken',
 	'ListLocalNegotiations',
 	'ListArguments'
 ]);

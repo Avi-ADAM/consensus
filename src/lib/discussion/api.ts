@@ -95,13 +95,7 @@ function toOpinion(node: any, index: number): Opinion {
 	};
 }
 
-export async function loadDiscussion(
-	id: string,
-	fetch: FetchLike = globalThis.fetch
-): Promise<LoadedDiscussion | null> {
-	const res = await sendToSer<any>({ id }, '39GetNegotiation', 0, 0, false, fetch);
-	const node = res?.data?.negotiation?.data;
-	if (!node) return null;
+function mapNegotiation(node: any): LoadedDiscussion {
 	const a = attr(node);
 	return {
 		meta: {
@@ -120,6 +114,24 @@ export async function loadDiscussion(
 		},
 		opinions: (a.positions?.data ?? []).map(toOpinion)
 	};
+}
+
+export async function loadDiscussion(
+	id: string,
+	fetch: FetchLike = globalThis.fetch
+): Promise<LoadedDiscussion | null> {
+	const res = await sendToSer<any>({ id }, '39GetNegotiation', 0, 0, false, fetch);
+	const node = res?.data?.negotiation?.data;
+	return node ? mapNegotiation(node) : null;
+}
+
+export async function loadDiscussionByToken(
+	token: string,
+	fetch: FetchLike = globalThis.fetch
+): Promise<LoadedDiscussion | null> {
+	const res = await sendToSer<any>({ token }, 'GetNegotiationByToken', 0, 0, false, fetch);
+	const node = res?.data?.negotiations?.data?.[0] ?? res?.data?.negotiation?.data;
+	return node ? mapNegotiation(node) : null;
 }
 
 export async function createDiscussion(

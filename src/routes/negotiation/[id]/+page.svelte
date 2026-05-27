@@ -20,6 +20,8 @@
 	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
 	import { permissionsFor } from '$lib/auth/permissions';
 	import { SvelteSet } from 'svelte/reactivity';
+	import { page } from '$app/state';
+	import { ShareButtons } from '@1lev1/svelte-share';
 
 	let { data } = $props();
 
@@ -58,6 +60,9 @@
 	let localOpinions = $state<Opinion[] | null>(null);
 	let opinions = $derived(localOpinions ?? base.opinions);
 	let topic = $derived(base.meta.topic);
+	let meta = $derived(data.loaded?.meta ?? null);
+	let shareable = $derived(!!meta?.shareToken && meta.visibility !== 'private');
+	let showShare = $state(false);
 	let voted = new SvelteSet<string>();
 
 	// Structured arguments (pros & cons) per opinion
@@ -256,6 +261,30 @@
 			שתי דעות-העוגן מגדירות את הקצוות. הוסיפו דעה ביניהן או קיצונית מעבר לקצה — לא חייב באמצע, אפשר
 			קרוב מאוד לדעה קיימת.
 		</p>
+
+		{#if shareable && meta}
+			<div class="mt-3">
+				<button
+					type="button"
+					onclick={() => (showShare = !showShare)}
+					class="rounded-lg border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
+				>
+					🔗 שיתוף הדיון
+				</button>
+				{#if showShare}
+					<div class="mt-3">
+						<ShareButtons
+							siteTitle="Consensus"
+							siteUrl={page.url.origin}
+							slug={`negotiation/${data.id}?token=${meta.shareToken}`}
+							title={topic}
+							desc={meta.description || topic}
+							lang="he"
+						/>
+					</div>
+				{/if}
+			</div>
+		{/if}
 
 		{#if !live}
 			<div class="mt-3 rounded-lg border border-white/15 bg-white/5 p-3 text-sm text-white/50">

@@ -1,9 +1,12 @@
 import type { PageLoad } from './$types';
-import { loadDiscussion } from '$lib/discussion/api';
+import { loadDiscussion, loadDiscussionByToken } from '$lib/discussion/api';
 
-export const load: PageLoad = async ({ params, fetch }) => {
+export const load: PageLoad = async ({ params, url, fetch }) => {
+	const token = url.searchParams.get('token');
 	try {
-		const loaded = await loadDiscussion(params.id, fetch);
+		const loaded = token
+			? await loadDiscussionByToken(token, fetch)
+			: await loadDiscussion(params.id, fetch);
 		return { id: params.id, loaded };
 	} catch {
 		return { id: params.id, loaded: null };
