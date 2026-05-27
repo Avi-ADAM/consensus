@@ -41,6 +41,15 @@ export interface ProposeInput {
 	relativePlacement: Record<string, unknown>;
 }
 
+export interface DiscussionSummary {
+	id: string;
+	topic: string;
+	description: string;
+	currentRound: number;
+	maxRounds: number;
+	positionsCount: number;
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function attr(node: any) {
 	return node?.attributes ?? {};
@@ -183,5 +192,31 @@ export async function supportPosition(
 	fetch: FetchLike = globalThis.fetch
 ): Promise<void> {
 	await sendToSer({ id, support: true }, '42UpdatePosition', 0, 0, false, fetch);
+}
+
+export async function listLocalDiscussions(
+	placeId: string,
+	fetch: FetchLike = globalThis.fetch
+): Promise<DiscussionSummary[]> {
+	const res = await sendToSer<any>(
+		{ placeId: Number(placeId) },
+		'ListLocalNegotiations',
+		0,
+		0,
+		false,
+		fetch
+	);
+	const list = res?.data?.negotiations?.data ?? [];
+	return list.map((n: any) => {
+		const a = attr(n);
+		return {
+			id: String(n.id),
+			topic: a.topic ?? '',
+			description: a.description ?? '',
+			currentRound: a.currentRound ?? 1,
+			maxRounds: a.maxRounds ?? 3,
+			positionsCount: a.positions?.data?.length ?? a.positionsCount ?? 0
+		};
+	});
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

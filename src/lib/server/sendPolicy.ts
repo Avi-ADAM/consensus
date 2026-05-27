@@ -14,7 +14,7 @@ export interface SendDecision {
  * Operations a guest (share-link visitor, no account, no charter) may trigger.
  * Read-only. Kept deliberately tiny since these run with the service token.
  */
-const GUEST_ALLOWED: ReadonlySet<string> = new Set(['39GetNegotiation']);
+const GUEST_ALLOWED: ReadonlySet<string> = new Set(['39GetNegotiation', 'ListLocalNegotiations']);
 
 /**
  * Operations a charter (agreement) user may trigger, on top of guest reads:
