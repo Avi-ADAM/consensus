@@ -81,11 +81,11 @@
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://consensus.app/" />
+  <meta property="og:url" content="https://consensus.1lev1.com/" />
   <meta property="og:site_name" content="consensus · פה אחד" />
   <meta property="og:title" content="consensus · פה אחד — פלטפורמת יישוב מחלוקות" />
   <meta property="og:description" content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה." />
-  <meta property="og:image" content="https://consensus.app/logo.png" />
+  <meta property="og:image" content="https://consensus.1lev1.com/logo.png" />
   <meta property="og:image:alt" content="consensus · פה אחד" />
   <meta property="og:locale" content="he_IL" />
 
@@ -93,7 +93,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="consensus · פה אחד — פלטפורמת יישוב מחלוקות" />
   <meta name="twitter:description" content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה." />
-  <meta name="twitter:image" content="https://consensus.app/logo.png" />
+  <meta name="twitter:image" content="https://consensus.1lev1.com/logo.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap" />
