@@ -76,7 +76,7 @@
 </script>
 
 <svelte:head>
-  <title>Consensus — פלטפורמת יישוב מחלוקות</title>
+  <title>consensus · פה אחד — פלטפורמת יישוב מחלוקות</title>
   <meta name="description" content="AI-powered dispute resolution platform" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap" />
@@ -100,9 +100,11 @@
 
     <nav class="nav">
       <div class="nav-inner">
-        <a href="/" class="logo">
-          <span class="logo-icon">⚖</span>
-          <span class="logo-text">Consensus</span>
+        <a href="/" class="logo" dir="ltr">
+          <img src="/logo.png" alt="consensus · פה אחד" class="logo-img" />
+          <span class="logo-text">consensus</span>
+          <span class="logo-sep">·</span>
+          <span class="logo-he">פה אחד</span>
         </a>
         <div class="nav-links">
           <a href="/faq">שאלות נפוצות</a>
@@ -347,9 +349,11 @@
   <footer>
     <div class="footer-inner">
       <div class="footer-brand">
-        <a href="/" class="logo">
-          <span class="logo-icon">⚖</span>
-          <span class="logo-text">Consensus</span>
+        <a href="/" class="logo" dir="ltr">
+          <img src="/logo.png" alt="consensus · פה אחד" class="logo-img" />
+          <span class="logo-text">consensus</span>
+          <span class="logo-sep">·</span>
+          <span class="logo-he">פה אחד</span>
         </a>
         <p>פלטפורמת AI ליישוב מחלוקות בצורה מובנית ואינטליגנטית</p>
         <div class="social-links">
@@ -509,8 +513,9 @@
     text-decoration: none;
   }
 
-  .logo-icon {
-    font-size: 1.8rem;
+  .logo-img {
+    height: 2rem;
+    width: auto;
     filter: drop-shadow(0 0 12px #7c3aed88);
   }
 
@@ -522,6 +527,19 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .logo-sep {
+    color: #6060a0;
+    font-size: 1.3rem;
+    font-weight: 400;
+  }
+
+  .logo-he {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #c4b5fd;
   }
 
   .nav-links {
