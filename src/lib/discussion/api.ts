@@ -180,10 +180,8 @@ export async function createPosition(
 
 export async function supportPosition(
 	id: string,
-	votes: number,
-	voters: string[],
 	fetch: FetchLike = globalThis.fetch
 ): Promise<void> {
-	await sendToSer({ id, votes, voters }, '42UpdatePosition', 0, 0, false, fetch);
+	await sendToSer({ id, support: true }, '42UpdatePosition', 0, 0, false, fetch);
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

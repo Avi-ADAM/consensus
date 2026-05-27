@@ -131,10 +131,11 @@ kind, pole, isAnchor, relativePlacement, __identity }`.
 
 ### 3.4 הרחבת `42UpdatePosition` (קיים) — הצבעה/תמיכה ועריכה
 
-`arg: { id, votes?, voters?, heading?, description?, location?, __identity }`.
-בהצבעה: הוסיפו את `__identity.externalId` ל-`voters` בצד השרת (idempotent), עדכנו
-`votes`. אל תאפשרו עריכת `heading/description` אלא אם `__identity.type==='registered'`
-והוא הבעלים.
+`arg: { id, support?, heading?, description?, location?, __identity }`.
+כשמגיע `support: true` — זו **הצבעה**: הוסיפו את `__identity.externalId` ל-`voters`
+בצד השרת (idempotent) ועדכנו `votes` בהתאם (אל תסמכו על votes/voters מהלקוח).
+אחרת זו **עריכה**: אפשרו `heading/description/location` רק אם
+`__identity.type==='registered'` והוא הבעלים.
 
 ### 3.5 חדש: `GetNegotiationByToken`
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import Spectrum from '$lib/discussion/Spectrum.svelte';
 	import {
 		colorFor,
@@ -8,16 +7,18 @@
 		type InsertMode,
 		type Opinion
 	} from '$lib/discussion/scale';
+	import { createPosition, loadDiscussion, supportPosition } from '$lib/discussion/api';
 	import { permissionsFor } from '$lib/auth/permissions';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	let { data } = $props();
 
 	let perms = $derived(permissionsFor(data.user.type));
+	let live = $derived(data.loaded !== null);
 
-	// Local demo state until the backend qids exist. Two anchors define the poles.
-	let topic = $state('האם להרחיב את שעות הפעילות של הספרייה הציבורית?');
-	let opinions = $state<Opinion[]>([
+	// Fallback demo content when the backend is not connected yet.
+	const SEED_TOPIC = 'האם להרחיב את שעות הפעילות של הספרייה הציבורית?';
+	const SEED_OPINIONS: Opinion[] = [
 		{
 			id: 'anchor-top',
 			heading: 'להשאיר כמו שהוא',
@@ -40,9 +41,20 @@
 			pole: 'bottom',
 			kind: 'opinion'
 		}
-	]);
+	];
 
+	// Server data is the source; local edits overlay it and reset on navigation.
+	let base = $derived(data.loaded ?? { meta: { topic: SEED_TOPIC }, opinions: SEED_OPINIONS });
+	let localOpinions = $state<Opinion[] | null>(null);
+	let opinions = $derived(localOpinions ?? base.opinions);
+	let topic = $derived(base.meta.topic);
 	let voted = new SvelteSet<string>();
+
+	$effect(() => {
+		const _id = data.id; // track navigation to reset the local overlay
+		localOpinions = null;
+		voted.clear();
+	});
 
 	// Add-opinion flow
 	let pending = $state<InsertMode | null>(null);
@@ -51,11 +63,11 @@
 	let fraction = $state(50);
 	let aiNote = $state<string | null>(null);
 	let aiBusy = $state(false);
+	let submitError = $state<string | null>(null);
 
 	let resolvedInsert = $derived<InsertMode | null>(
 		pending && pending.mode === 'between' ? { ...pending, fraction: fraction / 100 } : pending
 	);
-
 	let previewLocation = $derived(resolvedInsert ? insertLocation(opinions, resolvedInsert) : null);
 
 	function openForm(mode: InsertMode) {
@@ -64,36 +76,70 @@
 		description = '';
 		fraction = 50;
 		aiNote = null;
+		submitError = null;
 	}
 
 	function closeForm() {
 		pending = null;
 	}
 
-	function submit() {
+	async function refresh() {
+		const fresh = await loadDiscussion(data.id);
+		if (fresh) localOpinions = fresh.opinions;
+	}
+
+	async function submit() {
 		if (!resolvedInsert || !heading.trim()) return;
 		const location = insertLocation(opinions, resolvedInsert);
-		opinions = [
-			...opinions,
-			{
-				id: crypto.randomUUID(),
-				heading: heading.trim(),
-				description: description.trim(),
-				location,
-				votes: 0,
-				color: colorFor(opinions.length),
-				isAnchor: false,
-				pole: 'none',
-				kind: 'proposed_solution'
+		const relativePlacement =
+			resolvedInsert.mode === 'between'
+				? { mode: 'between', fraction: resolvedInsert.fraction ?? 0.5 }
+				: { mode: resolvedInsert.mode };
+
+		if (live) {
+			try {
+				await createPosition({
+					negotiationId: data.id,
+					heading: heading.trim(),
+					description: description.trim(),
+					location,
+					order: opinions.length + 1,
+					kind: 'proposed_solution',
+					relativePlacement
+				});
+				await refresh();
+				closeForm();
+			} catch {
+				submitError = 'שמירת הדעה נכשלה. נסו שוב.';
 			}
-		];
-		closeForm();
+		} else {
+			localOpinions = [
+				...opinions,
+				{
+					id: crypto.randomUUID(),
+					heading: heading.trim(),
+					description: description.trim(),
+					location,
+					votes: 0,
+					color: colorFor(opinions.length),
+					isAnchor: false,
+					pole: 'none',
+					kind: 'proposed_solution'
+				}
+			];
+			closeForm();
+		}
 	}
 
 	function support(id: string) {
 		if (voted.has(id)) return;
 		voted.add(id);
-		opinions = opinions.map((o) => (o.id === id ? { ...o, votes: o.votes + 1 } : o));
+		localOpinions = opinions.map((o) => (o.id === id ? { ...o, votes: o.votes + 1 } : o));
+		if (live) {
+			supportPosition(id)
+				.then(refresh)
+				.catch(() => {});
+		}
 	}
 
 	async function askAi() {
@@ -131,12 +177,18 @@
 
 <main dir="rtl" class="min-h-screen bg-[#09090f] px-4 py-8 text-white">
 	<div class="mx-auto max-w-3xl">
-		<p class="text-sm text-white/40">דיון #{page.params.id}</p>
+		<p class="text-sm text-white/40">דיון #{data.id}</p>
 		<h1 class="mt-1 text-2xl font-bold text-white">{topic}</h1>
 		<p class="mt-2 text-sm text-white/60">
 			שתי דעות-העוגן מגדירות את הקצוות. הוסיפו דעה ביניהן או קיצונית מעבר לקצה — לא חייב באמצע, אפשר
 			קרוב מאוד לדעה קיימת.
 		</p>
+
+		{#if !live}
+			<div class="mt-3 rounded-lg border border-white/15 bg-white/5 p-3 text-sm text-white/50">
+				מצב הדגמה — השרת אינו מחובר, השינויים אינם נשמרים.
+			</div>
+		{/if}
 
 		{#if data.user.type === 'charter'}
 			<div
@@ -206,6 +258,12 @@
 					class="mt-3 rounded-lg border border-violet-400/30 bg-violet-500/10 p-3 text-sm text-violet-100"
 				>
 					🤖 {aiNote}
+				</p>
+			{/if}
+
+			{#if submitError}
+				<p class="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">
+					{submitError}
 				</p>
 			{/if}
 
