@@ -106,7 +106,7 @@
         </a>
         <div class="nav-links">
           <a href="/faq">שאלות נפוצות</a>
-          <a href="/map">מפת דיונים</a>
+          <a href="/negotiation/local">מפת דיונים</a>
           <a href="/login" class="nav-login">כניסה</a>
           <a href="/register" class="nav-cta">הצטרף</a>
         </div>
@@ -335,7 +335,7 @@
         <p>הצטרף לאלפי אנשים שמגלים שניתן למצוא נקודת ביניים בכל מחלוקת</p>
         <div class="cta-actions">
           <a href="/register" class="btn-primary large">הצטרף עכשיו — בחינם</a>
-          <a href="/map" class="btn-ghost large">
+          <a href="/negotiation/local" class="btn-ghost large">
             <span>🗺️</span> ראה דיונים בסביבתך
           </a>
         </div>
@@ -363,7 +363,7 @@
         <div class="footer-col">
           <h4>מוצר</h4>
           <a href="/faq">שאלות נפוצות</a>
-          <a href="/map">מפת דיונים</a>
+          <a href="/negotiation/local">מפת דיונים</a>
           <a href="/about">אודות</a>
           <a href="/contact">צור קשר</a>
         </div>
@@ -400,7 +400,7 @@
     scrollbar-color: #7c3aed #1a1a2e;
   }
 
-  :global(html) { scroll-behavior: smooth; }
+  :global(html) { scroll-behavior: smooth; overflow-x: hidden; }
 
   :global(.visible) {
     opacity: 1 !important;
@@ -1208,6 +1208,7 @@
   .testimonials {
     padding: 8rem 0;
     background: linear-gradient(180deg, #09090f, #0d0820, #09090f);
+    overflow: hidden;
   }
 
   .testimonials-carousel {
