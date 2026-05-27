@@ -50,6 +50,22 @@ export interface DiscussionSummary {
 	positionsCount: number;
 }
 
+export type Stance = 'pro' | 'con';
+
+export interface Argument {
+	id: string;
+	body: string;
+	stance: Stance;
+	votes: number;
+}
+
+export interface CreateArgumentInput {
+	negotiationId: string;
+	positionId: string;
+	stance: Stance;
+	body: string;
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function attr(node: any) {
 	return node?.attributes ?? {};
@@ -218,5 +234,36 @@ export async function listLocalDiscussions(
 			positionsCount: a.positions?.data?.length ?? a.positionsCount ?? 0
 		};
 	});
+}
+
+export async function listArguments(
+	positionId: string,
+	fetch: FetchLike = globalThis.fetch
+): Promise<Argument[]> {
+	const res = await sendToSer<any>({ positionId }, 'ListArguments', 0, 0, false, fetch);
+	const list = res?.data?.arguments?.data ?? [];
+	return list.map((n: any) => {
+		const a = attr(n);
+		return {
+			id: String(n.id),
+			body: a.body ?? '',
+			stance: a.stance === 'con' ? 'con' : 'pro',
+			votes: a.votes ?? 0
+		};
+	});
+}
+
+export async function createArgument(
+	input: CreateArgumentInput,
+	fetch: FetchLike = globalThis.fetch
+): Promise<void> {
+	await sendToSer({ ...input }, 'CreateArgument', 0, 0, false, fetch);
+}
+
+export async function supportArgument(
+	id: string,
+	fetch: FetchLike = globalThis.fetch
+): Promise<void> {
+	await sendToSer({ id, support: true }, 'UpdateArgument', 0, 0, false, fetch);
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

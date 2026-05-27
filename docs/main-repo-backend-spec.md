@@ -38,7 +38,7 @@
    `consensus-public`) עם הרשאות **רק** ל:
    - `Negotiation`: `find`, `findOne`
    - `Position`: `create`, `update`
-   - `Comment`: `create`
+   - `Argument`: `find`, `create`, `update`
    - `Cuntry`: `find`
      הוסיפו אותו כ-env (למשל `CONSENSUS_PUBLIC_TOKEN`) והשתמשו בו במקום
      `VITE_ADMINMONTHER` כאשר הבקשה מגיעה מהקונצנזוס (ראו סעיף הבא).
@@ -89,18 +89,24 @@
 (נשמרים כבר: `heading`, `description`, `author`, `authorEmail`, `votes`,
 `voters`(json), `location`, `intensity`, `tags`(json), `order`, `aiMeta`(json).)
 
-### 2.3 content-type חדש: `Comment`
+### 2.3 content-type חדש: `Argument` (דיון מובנה — יתרונות/חסרונות)
 
-| שדה                | טיפוס                                           | הערה               |
-| ------------------ | ----------------------------------------------- | ------------------ |
-| `body`             | text                                            | תוכן התגובה        |
-| `authorName`       | string                                          | מתוך `__identity`  |
-| `authorEmail`      | string                                          | מתוך `__identity`  |
-| `authorExternalId` | string                                          | מתוך `__identity`  |
-| `authorType`       | enum `registered`/`charter`/`guest`             |                    |
-| `negotiation`      | relation manyToOne → `Negotiation`              |                    |
-| `position`         | relation manyToOne → `Position` (nullable)      | תגובה לדעה ספציפית |
-| `parent`           | relation manyToOne → `Comment` (self, nullable) | שרשור              |
+במקום תגובות חופשיות: לכל דעה (`Position`) מצרפים טיעונים בעד/נגד, כל אחד עם
+תמיכה משלו. כך עולות הדעות עם האיזון הטוב בין יתרונות לחסרונות.
+
+| שדה                | טיפוס                                            | הערה                     |
+| ------------------ | ------------------------------------------------ | ------------------------ |
+| `body`             | text                                             | תוכן הטיעון              |
+| `stance`           | enum `pro` / `con`                               | יתרון / חיסרון           |
+| `votes`            | integer (default `0`)                            | תמיכה בטיעון             |
+| `voters`           | json (default `[]`)                              | מזהי המצביעים            |
+| `authorName`       | string                                           | מתוך `__identity`        |
+| `authorEmail`      | string                                           | מתוך `__identity`        |
+| `authorExternalId` | string                                           | מתוך `__identity`        |
+| `authorType`       | enum `registered`/`charter`/`guest`              |                          |
+| `position`         | relation manyToOne → `Position`                  | הטיעון נוגע לדעה זו      |
+| `negotiation`      | relation manyToOne → `Negotiation`               | לשיוך/סינון              |
+| `parent`           | relation manyToOne → `Argument` (self, nullable) | טיעון-נגד (לשרשור עתידי) |
 
 ---
 
@@ -148,10 +154,14 @@ kind, pole, isAnchor, relativePlacement, __identity }`.
 `{ local }` (ו/או `unlisted` לפי שיקולכם). מחזיר רשימה מקוצרת
 (`id, topic, description, currentRound, maxRounds, positions count`).
 
-### 3.7 חדש: `CreateComment`
+### 3.7 חדש: טיעונים (יתרונות/חסרונות)
 
-`arg: { negotiationId, positionId?, parentId?, body, __identity }`.
-שדות ה-author מ-`__identity`.
+- **`ListArguments`** — `arg: { positionId }` → טיעונים של הדעה
+  (`id, body, stance, votes`), ממוינים למשל לפי `votes` יורד.
+- **`CreateArgument`** — `arg: { negotiationId, positionId, stance, body, __identity }`.
+  שדות ה-author מ-`__identity`; `stance` ∈ `pro|con`.
+- **`UpdateArgument`** — `arg: { id, support?, __identity }`. כמו 3.4: `support:true`
+  מוסיף את `__identity.externalId` ל-`voters` (idempotent) ומעדכן `votes`.
 
 ### 3.8 חדש (אופציונלי): `ListPlaces`
 
@@ -163,12 +173,12 @@ kind, pole, isAnchor, relativePlacement, __identity }`.
 
 ## 4. צ'קליסט
 
-- [ ] content-types: הרחבת `Negotiation` + `Position`, יצירת `Comment`
+- [ ] content-types: הרחבת `Negotiation` + `Position`, יצירת `Argument`
 - [ ] relation `Negotiation.places` → `Cuntry`
 - [ ] Strapi API Token `consensus-public` בהרשאות מינימום + env
 - [ ] `/api/send`: מסלול service מאומת ב-secret + שימוש בטוקן המוגבל לבקשות קונצנזוס
 - [ ] `/api/send`: שימוש ב-`__identity` כמקור אמת לזהות בכתיבות service
-- [ ] qids: הרחבת 39/40/41/42 + חדשים `GetNegotiationByToken`, `ListLocalNegotiations`, `CreateComment` (+`ListPlaces` אופציונלי)
+- [ ] qids: הרחבת 39/40/41/42 + חדשים `GetNegotiationByToken`, `ListLocalNegotiations`, `ListArguments`, `CreateArgument`, `UpdateArgument` (+`ListPlaces` אופציונלי)
 - [ ] הרשאות Strapi לטוקן המוגבל מכסות בדיוק את ה-qids האלו
 
 > בצד הקונצנזוס: הפרוקסי (`src/routes/api/send/+server.ts`) כבר שולח `isSer`

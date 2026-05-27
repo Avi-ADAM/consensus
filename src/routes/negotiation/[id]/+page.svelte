@@ -7,7 +7,17 @@
 		type InsertMode,
 		type Opinion
 	} from '$lib/discussion/scale';
-	import { createPosition, loadDiscussion, supportPosition } from '$lib/discussion/api';
+	import {
+		createArgument,
+		createPosition,
+		listArguments,
+		loadDiscussion,
+		supportArgument,
+		supportPosition,
+		type Argument,
+		type Stance
+	} from '$lib/discussion/api';
+	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
 	import { permissionsFor } from '$lib/auth/permissions';
 	import { SvelteSet } from 'svelte/reactivity';
 
@@ -50,10 +60,19 @@
 	let topic = $derived(base.meta.topic);
 	let voted = new SvelteSet<string>();
 
+	// Structured arguments (pros & cons) per opinion
+	let openId = $state<string | null>(null);
+	let args = $state<Argument[]>([]);
+	let argsLoading = $state(false);
+	let argVoted = new SvelteSet<string>();
+	let demoArgs = $state<Record<string, Argument[]>>({});
+	let openOpinion = $derived(opinions.find((o) => o.id === openId) ?? null);
+
 	$effect(() => {
 		const _id = data.id; // track navigation to reset the local overlay
 		localOpinions = null;
 		voted.clear();
+		openId = null;
 	});
 
 	// Add-opinion flow
@@ -142,6 +161,60 @@
 		}
 	}
 
+	async function openPanel(id: string) {
+		openId = id;
+		if (live) {
+			argsLoading = true;
+			try {
+				args = await listArguments(id);
+			} catch {
+				args = [];
+			} finally {
+				argsLoading = false;
+			}
+		} else {
+			args = demoArgs[id] ?? [];
+		}
+	}
+
+	function closePanel() {
+		openId = null;
+	}
+
+	async function createArg(stance: Stance, body: string) {
+		if (!openId) return;
+		if (live) {
+			try {
+				await createArgument({ negotiationId: data.id, positionId: openId, stance, body });
+				args = await listArguments(openId);
+			} catch {
+				/* keep panel open */
+			}
+		} else {
+			const next = [
+				...(demoArgs[openId] ?? []),
+				{ id: crypto.randomUUID(), body, stance, votes: 0 }
+			];
+			demoArgs = { ...demoArgs, [openId]: next };
+			args = next;
+		}
+	}
+
+	function supportArg(id: string) {
+		if (argVoted.has(id)) return;
+		argVoted.add(id);
+		args = args.map((a) => (a.id === id ? { ...a, votes: a.votes + 1 } : a));
+		if (live) {
+			supportArgument(id)
+				.then(async () => {
+					if (openId) args = await listArguments(openId);
+				})
+				.catch(() => {});
+		} else if (openId) {
+			demoArgs = { ...demoArgs, [openId]: args };
+		}
+	}
+
 	async function askAi() {
 		if (!resolvedInsert || !heading.trim()) return;
 		aiBusy = true;
@@ -211,6 +284,7 @@
 			canVote={perms.vote}
 			oninsert={openForm}
 			onsupport={support}
+			onopen={openPanel}
 		/>
 	</div>
 </main>
@@ -296,4 +370,17 @@
 			</div>
 		</div>
 	</div>
+{/if}
+
+{#if openId && openOpinion}
+	<ArgumentsPanel
+		title={openOpinion.heading}
+		{args}
+		loading={argsLoading}
+		canAdd={perms.comment}
+		canVote={perms.vote}
+		oncreate={createArg}
+		onsupport={supportArg}
+		onclose={closePanel}
+	/>
 {/if}

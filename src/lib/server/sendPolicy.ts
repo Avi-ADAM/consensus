@@ -14,17 +14,24 @@ export interface SendDecision {
  * Operations a guest (share-link visitor, no account, no charter) may trigger.
  * Read-only. Kept deliberately tiny since these run with the service token.
  */
-const GUEST_ALLOWED: ReadonlySet<string> = new Set(['39GetNegotiation', 'ListLocalNegotiations']);
+const GUEST_ALLOWED: ReadonlySet<string> = new Set([
+	'39GetNegotiation',
+	'ListLocalNegotiations',
+	'ListArguments'
+]);
 
 /**
  * Operations a charter (agreement) user may trigger, on top of guest reads:
- * propose a solution (create position) and support/vote (update position).
- * Notably excludes 40CreateNegotiation — charter users cannot create discussions.
+ * propose a solution (create position), support/vote, and add/support arguments
+ * (pros & cons). Notably excludes 40CreateNegotiation — charter users cannot
+ * create discussions.
  */
 const CHARTER_ALLOWED: ReadonlySet<string> = new Set([
 	...GUEST_ALLOWED,
 	'41CreatePosition',
-	'42UpdatePosition'
+	'42UpdatePosition',
+	'CreateArgument',
+	'UpdateArgument'
 ]);
 
 /**

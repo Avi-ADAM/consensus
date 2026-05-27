@@ -15,6 +15,7 @@
 		canVote?: boolean;
 		oninsert?: (mode: InsertMode) => void;
 		onsupport?: (id: string) => void;
+		onopen?: (id: string) => void;
 	}
 
 	let {
@@ -22,7 +23,8 @@
 		canPropose = false,
 		canVote = false,
 		oninsert = () => {},
-		onsupport = () => {}
+		onsupport = () => {},
+		onopen = () => {}
 	}: Props = $props();
 
 	let sorted = $derived(sortByLocation(opinions));
@@ -125,6 +127,13 @@
 							תמיכה
 						</button>
 					{/if}
+					<button
+						type="button"
+						class="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70 hover:bg-white/20"
+						onclick={() => onopen(opinion.id)}
+					>
+						יתרונות/חסרונות
+					</button>
 				</div>
 			</div>
 		</div>

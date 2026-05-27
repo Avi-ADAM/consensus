@@ -30,9 +30,11 @@ describe('authorizeSend', () => {
 		});
 	});
 
-	it('lets charter users propose and vote via the service token, but not create discussions', () => {
+	it('lets charter users propose, vote and argue via the service token, but not create discussions', () => {
 		expect(authorizeSend(charter, '41CreatePosition')).toEqual({ allowed: true, useService: true });
 		expect(authorizeSend(charter, '42UpdatePosition')).toEqual({ allowed: true, useService: true });
+		expect(authorizeSend(charter, 'CreateArgument')).toEqual({ allowed: true, useService: true });
+		expect(authorizeSend(charter, 'UpdateArgument')).toEqual({ allowed: true, useService: true });
 		expect(authorizeSend(charter, '39GetNegotiation')).toEqual({ allowed: true, useService: true });
 		expect(authorizeSend(charter, '40CreateNegotiation')).toEqual({
 			allowed: false,
@@ -46,6 +48,8 @@ describe('authorizeSend', () => {
 			allowed: true,
 			useService: true
 		});
+		expect(authorizeSend(guest, 'ListArguments')).toEqual({ allowed: true, useService: true });
+		expect(authorizeSend(guest, 'CreateArgument')).toEqual({ allowed: false, useService: true });
 		expect(authorizeSend(guest, '41CreatePosition')).toEqual({ allowed: false, useService: true });
 		expect(authorizeSend(guest, '40CreateNegotiation')).toEqual({
 			allowed: false,
