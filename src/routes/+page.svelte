@@ -107,8 +107,8 @@
         <div class="nav-links">
           <a href="/faq">שאלות נפוצות</a>
           <a href="/negotiation/local">מפת דיונים</a>
-          <a href="/login" class="nav-login">כניסה</a>
-          <a href="/register" class="nav-cta">הצטרף</a>
+          <a href="https://www.1lev1.com/login" class="nav-login">כניסה</a>
+          <a href="https://www.1lev1.com/signup" class="nav-cta">הצטרף</a>
         </div>
       </div>
     </nav>
@@ -334,7 +334,7 @@
         <h2>מוכן להגיע להסכמה?</h2>
         <p>הצטרף לאלפי אנשים שמגלים שניתן למצוא נקודת ביניים בכל מחלוקת</p>
         <div class="cta-actions">
-          <a href="/register" class="btn-primary large">הצטרף עכשיו — בחינם</a>
+          <a href="https://www.1lev1.com/signup" class="btn-primary large">הצטרף עכשיו — בחינם</a>
           <a href="/negotiation/local" class="btn-ghost large">
             <span>🗺️</span> ראה דיונים בסביבתך
           </a>
@@ -391,16 +391,21 @@
   /* ══════════════ BASE ══════════════ */
   :global(*) { margin: 0; padding: 0; box-sizing: border-box; }
 
+  :global(html),
+  :global(body) {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   :global(body) {
     font-family: 'Sora', 'Frank Ruhl Libre', sans-serif;
     background: #09090f;
     color: #f0f0f8;
-    overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: #7c3aed #1a1a2e;
   }
 
-  :global(html) { scroll-behavior: smooth; overflow-x: hidden; }
+  :global(html) { scroll-behavior: smooth; }
 
   :global(.visible) {
     opacity: 1 !important;
@@ -411,6 +416,9 @@
 
   main {
     font-family: 'Frank Ruhl Libre', 'Sora', serif;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   /* ══════════════ HERO ══════════════ */
@@ -1510,6 +1518,8 @@
     .hero-stats { flex-wrap: wrap; gap: 1rem; }
     .stat-divider { display: none; }
     .nav-links a:not(.nav-cta):not(.nav-login) { display: none; }
+    .nav-inner { padding: 0 1rem; gap: 0.75rem; }
+    .nav-links { gap: 0.6rem; }
     .footer-links { grid-template-columns: repeat(2, 1fr); }
     .cta-actions { flex-direction: column; align-items: center; }
   }
