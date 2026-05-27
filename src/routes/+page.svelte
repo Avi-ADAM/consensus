@@ -77,7 +77,24 @@
 
 <svelte:head>
   <title>consensus · פה אחד — פלטפורמת יישוב מחלוקות</title>
-  <meta name="description" content="AI-powered dispute resolution platform" />
+  <meta name="description" content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה." />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://consensus.1lev1.com/" />
+  <meta property="og:site_name" content="consensus · פה אחד" />
+  <meta property="og:title" content="consensus · פה אחד — פלטפורמת יישוב מחלוקות" />
+  <meta property="og:description" content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה." />
+  <meta property="og:image" content="https://consensus.1lev1.com/logo.png" />
+  <meta property="og:image:alt" content="consensus · פה אחד" />
+  <meta property="og:locale" content="he_IL" />
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="consensus · פה אחד — פלטפורמת יישוב מחלוקות" />
+  <meta name="twitter:description" content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה." />
+  <meta name="twitter:image" content="https://consensus.1lev1.com/logo.png" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap" />
 </svelte:head>
@@ -385,7 +402,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 Consensus Platform · גרסה 1.1</span>
+      <span>© 2026 consensus · פה אחד · גרסה 1.1</span>
       <span>נוצר אוטומטית · 5.3.2026</span>
     </div>
   </footer>
