@@ -1,5 +1,13 @@
 import { sendToSer } from '$lib/send/sendToSer';
-import { colorFor, type Opinion, type Pole, type OpinionKind } from './scale';
+import {
+	colorFor,
+	type Clause,
+	type Issue,
+	type Opinion,
+	type Origin,
+	type Pole,
+	type OpinionKind
+} from './scale';
 
 type FetchLike = typeof globalThis.fetch;
 
@@ -20,6 +28,13 @@ export interface LoadedDiscussion {
 	opinions: Opinion[];
 }
 
+export interface OpinionInput {
+	heading: string;
+	description: string;
+	/** 0..100 where the author places themselves — a hint, not the shown location. */
+	selfPlacement?: number;
+}
+
 export interface CreateDiscussionInput {
 	topic: string;
 	description: string;
@@ -27,8 +42,10 @@ export interface CreateDiscussionInput {
 	isLocal: boolean;
 	placeIds: string[];
 	maxRounds: number;
-	anchorTop: { heading: string; description: string };
-	anchorBottom: { heading: string; description: string };
+	/** The creator's own opinion — the only required one. */
+	ownOpinion: OpinionInput;
+	/** Opinions of others the creator optionally seeds (kept non-prominent in UI). */
+	otherOpinions?: OpinionInput[];
 }
 
 export interface ProposeInput {
@@ -39,6 +56,7 @@ export interface ProposeInput {
 	order: number;
 	kind: OpinionKind;
 	relativePlacement: Record<string, unknown>;
+	selfPlacement?: number;
 }
 
 export interface DiscussionSummary {
@@ -134,10 +152,25 @@ export async function loadDiscussionByToken(
 	return node ? mapNegotiation(node) : null;
 }
 
+function extractPositionId(created: any): string | null {
+	const id = created?.data?.createPosition?.data?.id ?? created?.id;
+	return id ? String(id) : null;
+}
+
+/**
+ * Evenly spread initial locations across the axis for the seed opinions. These
+ * are placeholders: once clauses exist, the location is re-derived from them.
+ */
+function seedLocation(own: OpinionInput, index: number, total: number): number {
+	if (typeof own.selfPlacement === 'number') return own.selfPlacement;
+	if (total <= 1) return 50;
+	return Math.round((100 * index) / (total - 1));
+}
+
 export async function createDiscussion(
 	input: CreateDiscussionInput,
 	fetch: FetchLike = globalThis.fetch
-): Promise<{ id: string; shareToken: string } | null> {
+): Promise<{ id: string; shareToken: string; positionIds: string[] } | null> {
 	const shareToken =
 		typeof crypto !== 'undefined' && crypto.randomUUID
 			? crypto.randomUUID()
@@ -163,49 +196,34 @@ export async function createDiscussion(
 	const id = created?.data?.createNegotiation?.data?.id ?? created?.id;
 	if (!id) return null;
 
-	await sendToSer(
-		{
-			negotiationId: id,
-			heading: input.anchorTop.heading,
-			description: input.anchorTop.description,
-			location: 0,
-			order: 1,
-			kind: 'opinion',
-			isAnchor: true,
-			pole: 'top'
-		},
-		'41CreatePosition',
-		0,
-		0,
-		false,
-		fetch
-	);
-	await sendToSer(
-		{
-			negotiationId: id,
-			heading: input.anchorBottom.heading,
-			description: input.anchorBottom.description,
-			location: 100,
-			order: 2,
-			kind: 'opinion',
-			isAnchor: true,
-			pole: 'bottom'
-		},
-		'41CreatePosition',
-		0,
-		0,
-		false,
-		fetch
-	);
+	const seeds = [input.ownOpinion, ...(input.otherOpinions ?? [])];
+	const positionIds: string[] = [];
+	for (let i = 0; i < seeds.length; i++) {
+		const seed = seeds[i];
+		const posId = await createPosition(
+			{
+				negotiationId: String(id),
+				heading: seed.heading,
+				description: seed.description,
+				location: seedLocation(seed, i, seeds.length),
+				order: i + 1,
+				kind: 'opinion',
+				relativePlacement: {},
+				selfPlacement: seed.selfPlacement
+			},
+			fetch
+		);
+		if (posId) positionIds.push(posId);
+	}
 
-	return { id: String(id), shareToken };
+	return { id: String(id), shareToken, positionIds };
 }
 
 export async function createPosition(
 	input: ProposeInput,
 	fetch: FetchLike = globalThis.fetch
-): Promise<void> {
-	await sendToSer(
+): Promise<string | null> {
+	const created = await sendToSer<any>(
 		{ ...input, isAnchor: false, pole: 'none' },
 		'41CreatePosition',
 		0,
@@ -213,6 +231,7 @@ export async function createPosition(
 		false,
 		fetch
 	);
+	return extractPositionId(created);
 }
 
 export async function supportPosition(
@@ -220,6 +239,15 @@ export async function supportPosition(
 	fetch: FetchLike = globalThis.fetch
 ): Promise<void> {
 	await sendToSer({ id, support: true }, '42UpdatePosition', 0, 0, false, fetch);
+}
+
+/** Write back the location derived from an opinion's clauses. */
+export async function updatePositionLocation(
+	id: string,
+	location: number,
+	fetch: FetchLike = globalThis.fetch
+): Promise<void> {
+	await sendToSer({ id, location }, '42UpdatePosition', 0, 0, false, fetch);
 }
 
 export async function listLocalDiscussions(
@@ -277,5 +305,89 @@ export async function supportArgument(
 	fetch: FetchLike = globalThis.fetch
 ): Promise<void> {
 	await sendToSer({ id, support: true }, 'UpdateArgument', 0, 0, false, fetch);
+}
+
+/* ── Issues & clauses ──────────────────────────────────────────────────── */
+
+function toIssue(node: any): Issue {
+	const a = attr(node);
+	return {
+		id: String(node?.id ?? crypto.randomUUID()),
+		title: a.title ?? '',
+		order: typeof a.order === 'number' ? a.order : 0,
+		origin: a.origin === 'human' ? 'human' : 'ai'
+	};
+}
+
+function toClause(node: any): Clause {
+	const a = attr(node);
+	const issueNode = a.issue?.data;
+	const positionNode = a.position?.data;
+	return {
+		id: String(node?.id ?? crypto.randomUUID()),
+		positionId: positionNode ? String(positionNode.id) : '',
+		issueId: issueNode ? String(issueNode.id) : null,
+		body: a.body ?? '',
+		stanceValue: typeof a.stanceValue === 'number' ? a.stanceValue : 50,
+		origin: a.origin === 'human' ? 'human' : 'ai',
+		confirmedByAuthor: Boolean(a.confirmedByAuthor)
+	};
+}
+
+export async function listIssues(
+	negotiationId: string,
+	fetch: FetchLike = globalThis.fetch
+): Promise<Issue[]> {
+	const res = await sendToSer<any>({ negotiationId }, 'ListIssues', 0, 0, false, fetch);
+	return (res?.data?.issues?.data ?? []).map(toIssue);
+}
+
+export async function listClauses(
+	negotiationId: string,
+	positionId: string | null = null,
+	fetch: FetchLike = globalThis.fetch
+): Promise<Clause[]> {
+	const arg: Record<string, unknown> = { negotiationId };
+	if (positionId) arg.positionId = positionId;
+	const res = await sendToSer<any>(arg, 'ListClauses', 0, 0, false, fetch);
+	return (res?.data?.clauses?.data ?? []).map(toClause);
+}
+
+export async function createIssue(
+	input: { negotiationId: string; title: string; order: number; origin: Origin },
+	fetch: FetchLike = globalThis.fetch
+): Promise<string | null> {
+	const res = await sendToSer<any>({ ...input }, 'CreateIssue', 0, 0, false, fetch);
+	const id = res?.data?.createIssue?.data?.id ?? res?.id;
+	return id ? String(id) : null;
+}
+
+export async function createClause(
+	input: {
+		negotiationId: string;
+		positionId: string;
+		issueId?: string | null;
+		body: string;
+		stanceValue: number;
+		origin: Origin;
+	},
+	fetch: FetchLike = globalThis.fetch
+): Promise<string | null> {
+	const res = await sendToSer<any>({ ...input }, 'CreateClause', 0, 0, false, fetch);
+	const id = res?.data?.createClause?.data?.id ?? res?.id;
+	return id ? String(id) : null;
+}
+
+export async function updateClause(
+	input: {
+		id: string;
+		body?: string;
+		stanceValue?: number;
+		issueId?: string | null;
+		confirmedByAuthor?: boolean;
+	},
+	fetch: FetchLike = globalThis.fetch
+): Promise<void> {
+	await sendToSer({ ...input }, 'UpdateClause', 0, 0, false, fetch);
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

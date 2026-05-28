@@ -122,8 +122,104 @@ export function weightedCenter(opinions: Opinion[], pad = 8): number {
  */
 export function consensusScore(opinions: Opinion[]): number {
 	if (opinions.length < 2) return 0;
-	const locations = opinions.map((o) => o.location);
-	const mean = locations.reduce((s, l) => s + l, 0) / locations.length;
-	const variance = locations.reduce((s, l) => s + (l - mean) ** 2, 0) / locations.length;
+	return spreadToScore(opinions.map((o) => o.location));
+}
+
+/** Shared variance→score mapping used by both the global and per-issue scores. */
+function spreadToScore(values: number[]): number {
+	if (values.length < 2) return 0;
+	const mean = values.reduce((s, v) => s + v, 0) / values.length;
+	const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length;
 	return Math.round(clamp(100 - Math.sqrt(variance), 0, 100));
+}
+
+/* ── Clause-level model ─────────────────────────────────────────────────────
+ * An opinion decomposes into clauses, each answering one shared issue (axis).
+ * The opinion's location on the global scale is *derived* from its clauses
+ * rather than placed by hand. */
+
+export type Origin = 'ai' | 'human';
+
+export interface Issue {
+	id: string;
+	title: string;
+	order: number;
+	origin: Origin;
+}
+
+export interface Clause {
+	id: string;
+	positionId: string;
+	/** Null until the clause is classified onto an issue. */
+	issueId: string | null;
+	body: string;
+	/** 0..100 stance on this clause's issue axis. */
+	stanceValue: number;
+	origin: Origin;
+	confirmedByAuthor: boolean;
+}
+
+/**
+ * Derive an opinion's global location from its clauses (mean stance). Returns
+ * null when there are no clauses, so callers can fall back to a manual/anchor
+ * location. The mean keeps the opinion centered among the positions it actually
+ * takes rather than at a hand-picked spot.
+ */
+export function locationFromClauses(clauses: Clause[]): number | null {
+	if (clauses.length === 0) return null;
+	const sum = clauses.reduce((s, c) => s + c.stanceValue, 0);
+	return clamp(sum / clauses.length, 0, 100);
+}
+
+export interface IssueConsensus {
+	issueId: string;
+	title: string;
+	/** 0..100; higher means the clauses on this issue agree. */
+	score: number;
+	clauseCount: number;
+}
+
+/**
+ * Consensus per issue: how tightly the clauses answering each issue agree.
+ * Lets the UI point energy at the contested issues and mark the settled ones.
+ */
+export function issueConsensus(clauses: Clause[], issues: Issue[]): IssueConsensus[] {
+	return [...issues]
+		.sort((a, b) => a.order - b.order)
+		.map((issue) => {
+			const values = clauses.filter((c) => c.issueId === issue.id).map((c) => c.stanceValue);
+			return {
+				issueId: issue.id,
+				title: issue.title,
+				score: spreadToScore(values),
+				clauseCount: values.length
+			};
+		});
+}
+
+/**
+ * Issues that other opinions addressed but this opinion skipped — the gaps to
+ * fill. `positionClauses` are the clauses of one opinion; `coveredIssueIds`
+ * are issues touched by any opinion in the discussion.
+ */
+export function missingIssues(positionClauses: Clause[], issues: Issue[]): Issue[] {
+	const covered = new Set(positionClauses.map((c) => c.issueId));
+	return issues.filter((i) => !covered.has(i.id));
+}
+
+/**
+ * The clause that pulls the derived location furthest from where the author
+ * placed themselves — powers the "because of clause X you sit at Y" hint.
+ */
+export function dominantClause(clauses: Clause[], selfPlacement: number): Clause | null {
+	let best: Clause | null = null;
+	let bestGap = -1;
+	for (const c of clauses) {
+		const gap = Math.abs(c.stanceValue - selfPlacement);
+		if (gap > bestGap) {
+			bestGap = gap;
+			best = c;
+		}
+	}
+	return best;
 }

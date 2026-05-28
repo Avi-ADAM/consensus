@@ -17,6 +17,7 @@
 		type Argument,
 		type Stance
 	} from '$lib/discussion/api';
+	import { decomposeAndPersist } from '$lib/discussion/decompose';
 	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
 	import { permissionsFor } from '$lib/auth/permissions';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -122,17 +123,32 @@
 
 		if (live) {
 			try {
-				await createPosition({
+				const posId = await createPosition({
 					negotiationId: data.id,
 					heading: heading.trim(),
 					description: description.trim(),
 					location,
 					order: opinions.length + 1,
 					kind: 'proposed_solution',
-					relativePlacement
+					relativePlacement,
+					selfPlacement: Math.round(location)
 				});
 				await refresh();
 				closeForm();
+				if (posId) {
+					decomposeAndPersist({
+						negotiationId: data.id,
+						positionId: posId,
+						topic,
+						opinion: {
+							heading: heading.trim(),
+							description: description.trim(),
+							selfPlacement: Math.round(location)
+						}
+					})
+						.then(refresh)
+						.catch(() => {});
+				}
 			} catch {
 				submitError = 'שמירת הדעה נכשלה. נסו שוב.';
 			}
