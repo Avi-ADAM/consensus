@@ -7,20 +7,11 @@
 	import { colorFor, locationFromClauses, type Clause, type Issue, type Opinion } from './scale';
 	import type { SynthesisDraft } from './decompose';
 
-	const TOPIC = 'האם להפוך את רחוב המרכז למדרחוב?';
-
 	function uid(): string {
 		return typeof crypto !== 'undefined' && crypto.randomUUID
 			? crypto.randomUUID()
 			: Math.random().toString(36).slice(2);
 	}
-
-	let issues = $state<Issue[]>([
-		{ id: 'i1', title: 'תנועת רכב', order: 0, origin: 'ai' },
-		{ id: 'i2', title: 'חניה', order: 1, origin: 'ai' },
-		{ id: 'i3', title: 'תקציב', order: 2, origin: 'ai' },
-		{ id: 'i4', title: 'לוח זמנים', order: 3, origin: 'ai' }
-	]);
 
 	function clause(
 		id: string,
@@ -33,66 +24,221 @@
 		return { id, positionId, issueId, body, stanceValue, origin: 'ai', confirmedByAuthor };
 	}
 
-	let clauses = $state<Clause[]>([
-		// o1 — מדרחוב מלא ומיידי (חסר: חניה)
-		clause('c1', 'o1', 'i1', 'לחסום לחלוטין כניסת רכבים לרחוב', 90, true),
-		clause('c2', 'o1', 'i3', 'להשקיע תקציב משמעותי בריצוף ועיצוב', 80),
-		clause('c3', 'o1', 'i4', 'להתחיל את הביצוע כבר העונה', 85),
-		// o2 — להשאיר כמו שהוא (חסר: לוח זמנים)
-		clause('c4', 'o2', 'i1', 'לא לשנות את הסדרי התנועה הקיימים', 10, true),
-		clause('c5', 'o2', 'i2', 'לשמר את כל מקומות החניה ברחוב', 15),
-		clause('c6', 'o2', 'i3', 'לא להוציא תקציב ייעודי לפרויקט', 10),
-		// o3 — מדרחוב חלקי בסופי שבוע
-		clause('c7', 'o3', 'i1', 'לסגור לתנועה בסופי שבוע בלבד', 50),
-		clause('c8', 'o3', 'i2', 'להסדיר חניון תחליפי סמוך', 55),
-		clause('c9', 'o3', 'i3', 'תקציב מדורג לפי שלבים', 45),
-		clause('c10', 'o3', 'i4', 'פיילוט של חצי שנה ואז החלטה', 50)
-	]);
-
-	function makeOpinion(
-		id: string,
-		heading: string,
-		description: string,
-		votes: number,
-		selfPlacement: number,
-		index: number
-	): Opinion {
-		const own = clauses.filter((c) => c.positionId === id);
-		const location = locationFromClauses(own) ?? selfPlacement;
-		return {
-			id,
-			heading,
-			description,
-			location,
-			votes,
-			color: colorFor(index),
-			isAnchor: false,
-			pole: 'none',
-			kind: 'opinion',
-			selfPlacement,
-			authorExternalId: 'demo-user'
-		};
+	interface SeedOpinion {
+		id: string;
+		heading: string;
+		description: string;
+		votes: number;
+		selfPlacement: number;
 	}
 
-	let opinions = $state<Opinion[]>([
-		makeOpinion(
-			'o1',
-			'מדרחוב מלא ומיידי',
-			'לחסום את הרחוב לרכבים ולהפוך אותו למרחב הולכי רגל.',
-			3,
-			80,
-			0
-		),
-		makeOpinion('o2', 'להשאיר כמו שהוא', 'הרחוב מתפקד; שינוי יפגע בעסקים ובחניה.', 5, 5, 1),
-		makeOpinion(
-			'o3',
-			'מדרחוב חלקי בסופי שבוע',
-			'סגירה חלקית בסופי שבוע עם פתרון חניה תחליפי.',
-			8,
-			50,
-			2
-		)
-	]);
+	interface Scenario {
+		id: string;
+		label: string;
+		topic: string;
+		issues: Issue[];
+		seedClauses: Clause[];
+		seedOpinions: SeedOpinion[];
+		fill: Record<string, { body: string; stanceValue: number }>;
+		synthesis: SynthesisDraft;
+	}
+
+	const SCENARIOS: Scenario[] = [
+		{
+			id: 'ai',
+			label: 'רגולציה של AI',
+			topic: 'כיצד ראוי להסדיר בינה מלאכותית?',
+			issues: [
+				{ id: 'a1', title: 'היקף הרגולציה', order: 0, origin: 'ai' },
+				{ id: 'a2', title: 'פרטיות ונתונים', order: 1, origin: 'ai' },
+				{ id: 'a3', title: 'אחריות ונזיקין', order: 2, origin: 'ai' },
+				{ id: 'a4', title: 'השפעה על תעסוקה', order: 3, origin: 'ai' }
+			],
+			seedClauses: [
+				// o1 — רגולציה מחמירה (חסר: תעסוקה)
+				clause('ac1', 'o1', 'a1', 'לחייב רישוי ממשלתי לכל מודל גדול לפני שחרור', 90, true),
+				clause('ac2', 'o1', 'a2', 'לאסור אימון על נתונים אישיים ללא הסכמה מפורשת', 85),
+				clause('ac3', 'o1', 'a3', 'להטיל אחריות מלאה על המפתחים לכל נזק', 80),
+				// o2 — להניח לשוק (חסר: אחריות)
+				clause('ac4', 'o2', 'a1', 'לא להטיל רישוי; להסתמך על תקינה וולונטרית', 10, true),
+				clause('ac5', 'o2', 'a2', 'להסתמך על חוקי הפרטיות הקיימים בלבד', 20),
+				clause('ac6', 'o2', 'a4', 'לא להתערב בשוק העבודה; הוא יסתגל מעצמו', 15),
+				// o3 — מבוססת-סיכון
+				clause('ac7', 'o3', 'a1', 'רגולציה מדורגת לפי רמת הסיכון של היישום', 50),
+				clause('ac8', 'o3', 'a2', 'שקיפות וזכות הסבר, בלי איסור גורף', 55),
+				clause('ac9', 'o3', 'a3', 'אחריות משותפת בין המפתח למשתמש', 50),
+				clause('ac10', 'o3', 'a4', 'השקעה בהסבה מקצועית במקום עצירת פיתוח', 45)
+			],
+			seedOpinions: [
+				{
+					id: 'o1',
+					heading: 'רגולציה מחמירה ומיידית',
+					description: 'רישוי חובה, איסורים ברורים ואחריות מלאה של המפתחים.',
+					votes: 6,
+					selfPlacement: 80
+				},
+				{
+					id: 'o2',
+					heading: 'להניח לשוק',
+					description: 'רגולציה תחנוק חדשנות; עדיף תקינה וולונטרית.',
+					votes: 4,
+					selfPlacement: 10
+				},
+				{
+					id: 'o3',
+					heading: 'רגולציה מבוססת-סיכון',
+					description: 'דרישות מדורגות לפי סיכון, עם שקיפות והסבה מקצועית.',
+					votes: 9,
+					selfPlacement: 50
+				}
+			],
+			fill: {
+				'o1:a4': { body: 'תוכניות הסבה מקצועית במימון חברות ה-AI', stanceValue: 75 },
+				'o2:a3': { body: 'אחריות מוגבלת בכפוף לעמידה בתקינה וולונטרית', stanceValue: 20 }
+			},
+			synthesis: {
+				heading: 'מסגרת מבוססת-סיכון עם ערבויות',
+				description: 'רגולציה מדורגת לפי סיכון, שקיפות נתונים, אחריות משותפת והשקעה בהסבה.',
+				rationale:
+					'כל צד מקבל את העיקר שלו: מי שחושש מנזק מקבל בקרה על יישומי הסיכון הגבוה, ומי שחושש לחדשנות מקבל מסלול מהיר ליישומים קלי-סיכון ובלי איסורים גורפים.',
+				clauses: [
+					{
+						issueId: 'a1',
+						issueTitle: 'היקף הרגולציה',
+						body: 'רישוי רק ליישומי סיכון גבוה; קלי-סיכון בנוהל מקוצר',
+						stanceValue: 55
+					},
+					{
+						issueId: 'a2',
+						issueTitle: 'פרטיות ונתונים',
+						body: 'חובת שקיפות וזכות הסבר, עם הסכמה לנתונים רגישים',
+						stanceValue: 55
+					},
+					{
+						issueId: 'a3',
+						issueTitle: 'אחריות ונזיקין',
+						body: 'אחריות מדורגת בין המפתח למפעיל לפי השליטה בסיכון',
+						stanceValue: 50
+					},
+					{
+						issueId: 'a4',
+						issueTitle: 'השפעה על תעסוקה',
+						body: 'קרן הסבה מקצועית במימון משותף של התעשייה והמדינה',
+						stanceValue: 50
+					}
+				]
+			}
+		},
+		{
+			id: 'street',
+			label: 'מדרחוב עירוני',
+			topic: 'האם להפוך את רחוב המרכז למדרחוב?',
+			issues: [
+				{ id: 'i1', title: 'תנועת רכב', order: 0, origin: 'ai' },
+				{ id: 'i2', title: 'חניה', order: 1, origin: 'ai' },
+				{ id: 'i3', title: 'תקציב', order: 2, origin: 'ai' },
+				{ id: 'i4', title: 'לוח זמנים', order: 3, origin: 'ai' }
+			],
+			seedClauses: [
+				clause('c1', 'o1', 'i1', 'לחסום לחלוטין כניסת רכבים לרחוב', 90, true),
+				clause('c2', 'o1', 'i3', 'להשקיע תקציב משמעותי בריצוף ועיצוב', 80),
+				clause('c3', 'o1', 'i4', 'להתחיל את הביצוע כבר העונה', 85),
+				clause('c4', 'o2', 'i1', 'לא לשנות את הסדרי התנועה הקיימים', 10, true),
+				clause('c5', 'o2', 'i2', 'לשמר את כל מקומות החניה ברחוב', 15),
+				clause('c6', 'o2', 'i3', 'לא להוציא תקציב ייעודי לפרויקט', 10),
+				clause('c7', 'o3', 'i1', 'לסגור לתנועה בסופי שבוע בלבד', 50),
+				clause('c8', 'o3', 'i2', 'להסדיר חניון תחליפי סמוך', 55),
+				clause('c9', 'o3', 'i3', 'תקציב מדורג לפי שלבים', 45),
+				clause('c10', 'o3', 'i4', 'פיילוט של חצי שנה ואז החלטה', 50)
+			],
+			seedOpinions: [
+				{
+					id: 'o1',
+					heading: 'מדרחוב מלא ומיידי',
+					description: 'לחסום את הרחוב לרכבים ולהפוך אותו למרחב הולכי רגל.',
+					votes: 3,
+					selfPlacement: 80
+				},
+				{
+					id: 'o2',
+					heading: 'להשאיר כמו שהוא',
+					description: 'הרחוב מתפקד; שינוי יפגע בעסקים ובחניה.',
+					votes: 5,
+					selfPlacement: 5
+				},
+				{
+					id: 'o3',
+					heading: 'מדרחוב חלקי בסופי שבוע',
+					description: 'סגירה חלקית בסופי שבוע עם פתרון חניה תחליפי.',
+					votes: 8,
+					selfPlacement: 50
+				}
+			],
+			fill: {
+				'o1:i2': { body: 'להמיר את חניות הרחוב לחניון משותף בקצה הרחוב', stanceValue: 70 },
+				'o2:i4': { body: 'לא לקדם שינוי בטווח הנראה לעין', stanceValue: 10 }
+			},
+			synthesis: {
+				heading: 'מדרחוב מדורג עם פתרון חניה',
+				description: 'סגירה בסופי שבוע, חניון תחליפי, ותקציב מדורג לפי הצלחת פיילוט.',
+				rationale:
+					'כל צד מקבל את העיקר שלו: תומכי המדרחוב מקבלים מרחב הולכי רגל בסופי שבוע, והמתנגדים מקבלים שמירה על חניה ותקציב זהיר עם יציאה מדורגת.',
+				clauses: [
+					{
+						issueId: 'i1',
+						issueTitle: 'תנועת רכב',
+						body: 'סגירה לתנועה בסופי שבוע ובחגים, עם בחינת הרחבה',
+						stanceValue: 55
+					},
+					{
+						issueId: 'i2',
+						issueTitle: 'חניה',
+						body: 'הקמת חניון תחליפי במרחק הליכה לפני הסגירה',
+						stanceValue: 60
+					},
+					{
+						issueId: 'i3',
+						issueTitle: 'תקציב',
+						body: 'פיילוט זול ואז השקעה מלאה לפי הצלחה',
+						stanceValue: 50
+					},
+					{
+						issueId: 'i4',
+						issueTitle: 'לוח זמנים',
+						body: 'פיילוט של חצי שנה עם מדדי הצלחה ברורים',
+						stanceValue: 50
+					}
+				]
+			}
+		}
+	];
+
+	function buildOpinions(scn: Scenario): Opinion[] {
+		return scn.seedOpinions.map((o, idx) => {
+			const own = scn.seedClauses.filter((c) => c.positionId === o.id);
+			const location = locationFromClauses(own) ?? o.selfPlacement;
+			return {
+				id: o.id,
+				heading: o.heading,
+				description: o.description,
+				location,
+				votes: o.votes,
+				color: colorFor(idx),
+				isAnchor: false,
+				pole: 'none',
+				kind: 'opinion',
+				selfPlacement: o.selfPlacement,
+				authorExternalId: 'demo-user'
+			};
+		});
+	}
+
+	let scenarioId = $state(SCENARIOS[0].id);
+	let active = $derived(SCENARIOS.find((s) => s.id === scenarioId) ?? SCENARIOS[0]);
+
+	let issues = $state<Issue[]>(SCENARIOS[0].issues.map((i) => ({ ...i })));
+	let clauses = $state<Clause[]>(SCENARIOS[0].seedClauses.map((c) => ({ ...c })));
+	let opinions = $state<Opinion[]>(buildOpinions(SCENARIOS[0]));
 
 	let view = $state<'spectrum' | 'matrix'>('spectrum');
 	let clausesOpenId = $state<string | null>(null);
@@ -101,11 +247,17 @@
 	let clausesOpinion = $derived(opinions.find((o) => o.id === clausesOpenId) ?? null);
 	let openClauses = $derived(clauses.filter((c) => c.positionId === clausesOpenId));
 
-	// Canned "AI" gap fills so the demo behaves like the live assistant.
-	const FILL: Record<string, { body: string; stanceValue: number }> = {
-		'o1:i2': { body: 'להמיר את חניות הרחוב לחניון משותף בקצה הרחוב', stanceValue: 70 },
-		'o2:i4': { body: 'לא לקדם שינוי בטווח הנראה לעין', stanceValue: 10 }
-	};
+	function selectScenario(id: string) {
+		if (id === scenarioId) return;
+		const scn = SCENARIOS.find((s) => s.id === id) ?? SCENARIOS[0];
+		scenarioId = id;
+		issues = scn.issues.map((i) => ({ ...i }));
+		clauses = scn.seedClauses.map((c) => ({ ...c }));
+		opinions = buildOpinions(scn);
+		view = 'spectrum';
+		clausesOpenId = null;
+		synthDraft = null;
+	}
 
 	function rederive(positionId: string) {
 		const own = clauses.filter((c) => c.positionId === positionId);
@@ -120,7 +272,7 @@
 
 	function fillGap(issue: Issue) {
 		if (!clausesOpinion) return;
-		const canned = FILL[`${clausesOpinion.id}:${issue.id}`] ?? {
+		const canned = active.fill[`${clausesOpinion.id}:${issue.id}`] ?? {
 			body: `הצעה להיבט "${issue.title}" בהתאם לעמדה`,
 			stanceValue: Math.round(clausesOpinion.location)
 		};
@@ -153,38 +305,7 @@
 	}
 
 	function proposeSynthesis() {
-		synthDraft = {
-			heading: 'מדרחוב מדורג עם פתרון חניה',
-			description: 'סגירה בסופי שבוע, חניון תחליפי, ותקציב מדורג לפי הצלחת פיילוט.',
-			rationale:
-				'כל צד מקבל את העיקר שלו: תומכי המדרחוב מקבלים מרחב הולכי רגל בסופי שבוע, והמתנגדים מקבלים שמירה על חניה ותקציב זהיר עם יציאה מדורגת.',
-			clauses: [
-				{
-					issueId: 'i1',
-					issueTitle: 'תנועת רכב',
-					body: 'סגירה לתנועה בסופי שבוע ובחגים, עם בחינת הרחבה',
-					stanceValue: 55
-				},
-				{
-					issueId: 'i2',
-					issueTitle: 'חניה',
-					body: 'הקמת חניון תחליפי במרחק הליכה לפני הסגירה',
-					stanceValue: 60
-				},
-				{
-					issueId: 'i3',
-					issueTitle: 'תקציב',
-					body: 'פיילוט זול ואז השקעה מלאה לפי הצלחה',
-					stanceValue: 50
-				},
-				{
-					issueId: 'i4',
-					issueTitle: 'לוח זמנים',
-					body: 'פיילוט של חצי שנה עם מדדי הצלחה ברורים',
-					stanceValue: 50
-				}
-			]
-		};
+		synthDraft = active.synthesis;
 	}
 
 	function confirmSynthesis() {
@@ -215,17 +336,29 @@
 </script>
 
 <div class="rounded-3xl border border-white/10 bg-[#0d0d18] p-4 sm:p-6" dir="rtl">
-	<div class="flex flex-wrap items-start justify-between gap-3">
-		<div>
-			<span class="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-200"
-				>דמו אינטראקטיבי · נתוני דוגמה</span
-			>
-			<h3 class="mt-2 text-lg font-bold text-white">{TOPIC}</h3>
-			<p class="mt-1 text-sm text-white/50">
-				לחצו "סעיפים" על דעה כדי לראות את הפירוק להיבטים, השלימו סעיף חסר, או הציעו נוסחת אמצע.
-			</p>
+	<div class="flex flex-wrap items-center gap-2">
+		<span class="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-200"
+			>דמו אינטראקטיבי · נתוני דוגמה</span
+		>
+		<div class="ms-auto inline-flex rounded-full border border-white/15 p-0.5 text-xs">
+			{#each SCENARIOS as scn (scn.id)}
+				<button
+					type="button"
+					onclick={() => selectScenario(scn.id)}
+					class="rounded-full px-3 py-1 {scenarioId === scn.id
+						? 'bg-white/15 text-white'
+						: 'text-white/60'}"
+				>
+					{scn.label}
+				</button>
+			{/each}
 		</div>
 	</div>
+
+	<h3 class="mt-3 text-lg font-bold text-white">{active.topic}</h3>
+	<p class="mt-1 text-sm text-white/50">
+		לחצו "סעיפים" על דעה כדי לראות את הפירוק להיבטים, השלימו סעיף חסר, או הציעו נוסחת אמצע.
+	</p>
 
 	<div class="mt-4 space-y-3">
 		<IssueConsensusStrip {issues} {clauses} />
