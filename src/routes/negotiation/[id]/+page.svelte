@@ -21,10 +21,17 @@
 		type Argument,
 		type Stance
 	} from '$lib/discussion/api';
-	import { decomposeAndPersist, fillGap } from '$lib/discussion/decompose';
+	import {
+		decomposeAndPersist,
+		fillGap,
+		persistSynthesis,
+		requestSynthesis,
+		type SynthesisDraft
+	} from '$lib/discussion/decompose';
 	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
 	import ClausesPanel from '$lib/discussion/ClausesPanel.svelte';
 	import IssueConsensusStrip from '$lib/discussion/IssueConsensusStrip.svelte';
+	import SynthesisPreview from '$lib/discussion/SynthesisPreview.svelte';
 	import { permissionsFor } from '$lib/auth/permissions';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { page } from '$app/state';
@@ -89,6 +96,13 @@
 	let clausesOpinion = $derived(opinions.find((o) => o.id === clausesOpenId) ?? null);
 	let openClauses = $derived(clauses.filter((c) => c.positionId === clausesOpenId));
 
+	// Middle-ground synthesis
+	let synthDraft = $state<SynthesisDraft | null>(null);
+	let synthBusy = $state(false);
+	let synthSaving = $state(false);
+	let synthError = $state<string | null>(null);
+	let canSynthesize = $derived(live && perms.propose && issues.length > 0 && opinions.length >= 2);
+
 	async function loadClauseData() {
 		if (!live) return;
 		try {
@@ -112,6 +126,8 @@
 		clausesOpenId = null;
 		issues = [];
 		clauses = [];
+		synthDraft = null;
+		synthError = null;
 		loadClauseData();
 	});
 
@@ -177,6 +193,43 @@
 			/* leave the panel open; the gap simply stays */
 		} finally {
 			fillingIssueId = null;
+		}
+	}
+
+	async function proposeSynthesis() {
+		if (!canSynthesize || synthBusy) return;
+		synthBusy = true;
+		synthError = null;
+		try {
+			const draft = await requestSynthesis({ topic, issues, clauses });
+			if (draft) {
+				synthDraft = draft;
+			} else {
+				synthError = 'עוזר ה-AI אינו זמין כעת.';
+			}
+		} catch {
+			synthError = 'שגיאה בהפקת נוסחת האמצע.';
+		} finally {
+			synthBusy = false;
+		}
+	}
+
+	async function confirmSynthesis() {
+		if (!synthDraft || synthSaving) return;
+		synthSaving = true;
+		try {
+			await persistSynthesis({
+				negotiationId: data.id,
+				order: opinions.length + 1,
+				draft: synthDraft,
+				existingIssues: issues
+			});
+			synthDraft = null;
+			await refresh();
+		} catch {
+			synthError = 'שמירת נוסחת האמצע נכשלה.';
+		} finally {
+			synthSaving = false;
 		}
 	}
 
@@ -390,8 +443,23 @@
 	</div>
 
 	{#if issues.length > 0}
-		<div class="mx-auto mt-6 max-w-3xl">
+		<div class="mx-auto mt-6 max-w-3xl space-y-3">
 			<IssueConsensusStrip {issues} {clauses} />
+			{#if canSynthesize}
+				<div class="flex items-center gap-3">
+					<button
+						type="button"
+						onclick={proposeSynthesis}
+						disabled={synthBusy}
+						class="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-100 hover:bg-emerald-500/20 disabled:opacity-50"
+					>
+						{synthBusy ? 'מפיק נוסחת אמצע…' : '✨ הצע נוסחת אמצע'}
+					</button>
+					{#if synthError}
+						<span class="text-xs text-rose-300">{synthError}</span>
+					{/if}
+				</div>
+			{/if}
 		</div>
 	{/if}
 
@@ -516,5 +584,14 @@
 		{fillingIssueId}
 		onfill={fillGapClause}
 		onclose={closeClausesPanel}
+	/>
+{/if}
+
+{#if synthDraft}
+	<SynthesisPreview
+		draft={synthDraft}
+		saving={synthSaving}
+		onconfirm={confirmSynthesis}
+		onclose={() => (synthDraft = null)}
 	/>
 {/if}

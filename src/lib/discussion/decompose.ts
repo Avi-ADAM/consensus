@@ -1,6 +1,7 @@
 import {
 	createClause,
 	createIssue,
+	createPosition,
 	listIssues,
 	updatePositionLocation,
 	type OpinionInput
@@ -233,4 +234,149 @@ export async function fillGap(
 	}
 
 	return created;
+}
+
+/* ── Middle-ground synthesis ───────────────────────────────────────────── */
+
+export interface SynthesisClause {
+	issueId: string | null;
+	issueTitle: string;
+	body: string;
+	stanceValue: number;
+}
+
+export interface SynthesisDraft {
+	heading: string;
+	description: string;
+	rationale: string;
+	clauses: SynthesisClause[];
+}
+
+/**
+ * Ask the AI for a middle-ground formula across the discussion's issues. Returns
+ * a draft to preview (not yet persisted), or null when the assistant is
+ * unavailable so the caller can surface that.
+ */
+export async function requestSynthesis(
+	input: { topic: string; issues: Issue[]; clauses: Clause[] },
+	fetch: FetchLike = globalThis.fetch
+): Promise<SynthesisDraft | null> {
+	const payloadIssues = input.issues.map((issue) => ({
+		id: issue.id,
+		title: issue.title,
+		clauses: input.clauses
+			.filter((c) => c.issueId === issue.id)
+			.map((c) => ({ body: c.body, stanceValue: c.stanceValue }))
+	}));
+
+	const res = await fetch('/api/synthesize', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ topic: input.topic, issues: payloadIssues })
+	}).catch(() => null);
+	if (!res) return null;
+
+	const out = await res.json();
+	if (!out.available) return null;
+
+	const data = out.data ?? {};
+	const heading = String(data.heading ?? '').trim();
+	if (!heading) return null;
+	const clauses: SynthesisClause[] = Array.isArray(data.clauses)
+		? data.clauses
+				.map((c: Record<string, unknown>) => ({
+					issueId: c.issueId ? String(c.issueId) : null,
+					issueTitle: String(c.issueTitle ?? '').trim(),
+					body: String(c.body ?? '').trim(),
+					stanceValue: clampStance(c.stanceValue)
+				}))
+				.filter((c: SynthesisClause) => c.body)
+		: [];
+
+	return {
+		heading,
+		description: String(data.description ?? '').trim(),
+		rationale: String(data.rationale ?? '').trim(),
+		clauses
+	};
+}
+
+/**
+ * Persist a synthesis draft as a new proposed-solution opinion: create the
+ * position, attach its clauses across the existing issues, then derive its
+ * location. Returns the new position id, or null on failure.
+ */
+export async function persistSynthesis(
+	input: { negotiationId: string; order: number; draft: SynthesisDraft; existingIssues: Issue[] },
+	fetch: FetchLike = globalThis.fetch
+): Promise<string | null> {
+	const positionId = await createPosition(
+		{
+			negotiationId: input.negotiationId,
+			heading: input.draft.heading,
+			description: input.draft.description,
+			location: 50,
+			order: input.order,
+			kind: 'proposed_solution',
+			relativePlacement: {}
+		},
+		fetch
+	).catch(() => null);
+	if (!positionId) return null;
+
+	const byTitle = new Map<string, string>();
+	const byId = new Set(input.existingIssues.map((i) => i.id));
+	for (const issue of input.existingIssues) byTitle.set(issue.title.trim(), issue.id);
+	let order = input.existingIssues.length;
+
+	const saved: Clause[] = [];
+	for (const c of input.draft.clauses) {
+		let issueId = c.issueId && byId.has(c.issueId) ? c.issueId : null;
+		if (!issueId && c.issueTitle) {
+			issueId = byTitle.get(c.issueTitle) ?? null;
+			if (!issueId) {
+				issueId = await createIssue(
+					{
+						negotiationId: input.negotiationId,
+						title: c.issueTitle,
+						order: order++,
+						origin: 'ai'
+					},
+					fetch
+				).catch(() => null);
+				if (issueId) byTitle.set(c.issueTitle, issueId);
+			}
+		}
+
+		const clauseId = await createClause(
+			{
+				negotiationId: input.negotiationId,
+				positionId,
+				issueId,
+				body: c.body,
+				stanceValue: c.stanceValue,
+				origin: 'ai'
+			},
+			fetch
+		).catch(() => null);
+
+		if (clauseId) {
+			saved.push({
+				id: clauseId,
+				positionId,
+				issueId,
+				body: c.body,
+				stanceValue: c.stanceValue,
+				origin: 'ai',
+				confirmedByAuthor: false
+			});
+		}
+	}
+
+	const derived = locationFromClauses(saved);
+	if (derived !== null) {
+		await updatePositionLocation(positionId, Math.round(derived), fetch).catch(() => {});
+	}
+
+	return positionId;
 }
