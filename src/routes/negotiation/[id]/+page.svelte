@@ -3,6 +3,7 @@
 	import {
 		colorFor,
 		insertLocation,
+		locationFromClauses,
 		sortByLocation,
 		type Clause,
 		type InsertMode,
@@ -11,6 +12,7 @@
 	} from '$lib/discussion/scale';
 	import {
 		createArgument,
+		createClause,
 		createPosition,
 		listArguments,
 		listClauses,
@@ -18,6 +20,8 @@
 		loadDiscussion,
 		supportArgument,
 		supportPosition,
+		updateClause,
+		updatePositionLocation,
 		type Argument,
 		type Stance
 	} from '$lib/discussion/api';
@@ -31,6 +35,7 @@
 	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
 	import ClausesPanel from '$lib/discussion/ClausesPanel.svelte';
 	import IssueConsensusStrip from '$lib/discussion/IssueConsensusStrip.svelte';
+	import IssueMatrix from '$lib/discussion/IssueMatrix.svelte';
 	import SynthesisPreview from '$lib/discussion/SynthesisPreview.svelte';
 	import { permissionsFor } from '$lib/auth/permissions';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -95,6 +100,16 @@
 	let fillingIssueId = $state<string | null>(null);
 	let clausesOpinion = $derived(opinions.find((o) => o.id === clausesOpenId) ?? null);
 	let openClauses = $derived(clauses.filter((c) => c.positionId === clausesOpenId));
+	let savingClauseId = $state<string | null>(null);
+	let canEditClauses = $derived(
+		live &&
+			perms.editOwn &&
+			!!clausesOpinion?.authorExternalId &&
+			clausesOpinion.authorExternalId === data.user.id
+	);
+
+	// Overview: spectrum (default) vs issue matrix
+	let view = $state<'spectrum' | 'matrix'>('spectrum');
 
 	// Middle-ground synthesis
 	let synthDraft = $state<SynthesisDraft | null>(null);
@@ -230,6 +245,64 @@
 			synthError = 'שמירת נוסחת האמצע נכשלה.';
 		} finally {
 			synthSaving = false;
+		}
+	}
+
+	async function rederivePosition(positionId: string) {
+		const own = clauses.filter((c) => c.positionId === positionId);
+		const loc = locationFromClauses(own);
+		if (loc !== null) await updatePositionLocation(positionId, Math.round(loc)).catch(() => {});
+	}
+
+	async function updateClauseHandler(
+		clauseId: string,
+		draft: { body: string; stanceValue: number }
+	) {
+		if (savingClauseId) return;
+		savingClauseId = clauseId;
+		const positionId = clauses.find((c) => c.id === clauseId)?.positionId ?? null;
+		try {
+			await updateClause({ id: clauseId, body: draft.body, stanceValue: draft.stanceValue });
+			await loadClauseData();
+			if (positionId) await rederivePosition(positionId);
+			await refresh();
+		} catch {
+			/* keep the panel open */
+		} finally {
+			savingClauseId = null;
+		}
+	}
+
+	async function confirmClauseHandler(clauseId: string) {
+		if (savingClauseId) return;
+		savingClauseId = clauseId;
+		try {
+			await updateClause({ id: clauseId, confirmedByAuthor: true });
+			await loadClauseData();
+		} catch {
+			/* keep the panel open */
+		} finally {
+			savingClauseId = null;
+		}
+	}
+
+	async function addManualClause(issue: Issue, draft: { body: string; stanceValue: number }) {
+		if (!clausesOpinion) return;
+		const positionId = clausesOpinion.id;
+		try {
+			await createClause({
+				negotiationId: data.id,
+				positionId,
+				issueId: issue.id,
+				body: draft.body,
+				stanceValue: draft.stanceValue,
+				origin: 'human'
+			});
+			await loadClauseData();
+			await rederivePosition(positionId);
+			await refresh();
+		} catch {
+			/* keep the panel open */
 		}
 	}
 
@@ -445,35 +518,63 @@
 	{#if issues.length > 0}
 		<div class="mx-auto mt-6 max-w-3xl space-y-3">
 			<IssueConsensusStrip {issues} {clauses} />
-			{#if canSynthesize}
-				<div class="flex items-center gap-3">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<div class="inline-flex rounded-full border border-white/15 p-0.5 text-sm">
 					<button
 						type="button"
-						onclick={proposeSynthesis}
-						disabled={synthBusy}
-						class="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-100 hover:bg-emerald-500/20 disabled:opacity-50"
+						onclick={() => (view = 'spectrum')}
+						class="rounded-full px-3 py-1 {view === 'spectrum'
+							? 'bg-white/15 text-white'
+							: 'text-white/60'}"
 					>
-						{synthBusy ? 'מפיק נוסחת אמצע…' : '✨ הצע נוסחת אמצע'}
+						ספקטרום
 					</button>
-					{#if synthError}
-						<span class="text-xs text-rose-300">{synthError}</span>
-					{/if}
+					<button
+						type="button"
+						onclick={() => (view = 'matrix')}
+						class="rounded-full px-3 py-1 {view === 'matrix'
+							? 'bg-white/15 text-white'
+							: 'text-white/60'}"
+					>
+						מטריצת היבטים
+					</button>
 				</div>
-			{/if}
+				{#if canSynthesize}
+					<div class="flex items-center gap-3">
+						<button
+							type="button"
+							onclick={proposeSynthesis}
+							disabled={synthBusy}
+							class="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-100 hover:bg-emerald-500/20 disabled:opacity-50"
+						>
+							{synthBusy ? 'מפיק נוסחת אמצע…' : '✨ הצע נוסחת אמצע'}
+						</button>
+						{#if synthError}
+							<span class="text-xs text-rose-300">{synthError}</span>
+						{/if}
+					</div>
+				{/if}
+			</div>
 		</div>
 	{/if}
 
-	<div class="mt-10">
-		<Spectrum
-			{opinions}
-			canPropose={perms.propose}
-			canVote={perms.vote}
-			oninsert={openForm}
-			onsupport={support}
-			onopen={openPanel}
-			onclauses={openClausesPanel}
-		/>
-	</div>
+	{#if view === 'matrix' && issues.length > 0}
+		<div class="mx-auto mt-6 max-w-3xl">
+			<IssueMatrix {issues} {clauses} {opinions} />
+		</div>
+	{:else}
+		<div class="mt-10">
+			<Spectrum
+				{opinions}
+				canPropose={perms.propose}
+				canVote={perms.vote}
+				oninsert={openForm}
+				onsupport={support}
+				onopen={openPanel}
+				onclauses={openClausesPanel}
+			/>
+		</div>
+	{/if}
 </main>
 
 {#if pending}
@@ -579,10 +680,14 @@
 		{issues}
 		selfPlacement={clausesOpinion.selfPlacement}
 		derivedLocation={clausesOpinion.location}
-		canAdd={perms.propose}
+		canEdit={canEditClauses}
 		loading={clausesLoading}
 		{fillingIssueId}
+		{savingClauseId}
 		onfill={fillGapClause}
+		onaddmanual={addManualClause}
+		onupdate={updateClauseHandler}
+		onconfirm={confirmClauseHandler}
 		onclose={closeClausesPanel}
 	/>
 {/if}

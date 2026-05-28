@@ -110,7 +110,8 @@ function toOpinion(node: any, index: number): Opinion {
 		isAnchor: Boolean(a.isAnchor),
 		pole: (a.pole as Pole) ?? 'none',
 		kind: (a.kind as OpinionKind) ?? 'opinion',
-		selfPlacement: typeof a.selfPlacement === 'number' ? a.selfPlacement : undefined
+		selfPlacement: typeof a.selfPlacement === 'number' ? a.selfPlacement : undefined,
+		authorExternalId: a.authorExternalId ? String(a.authorExternalId) : undefined
 	};
 }
 

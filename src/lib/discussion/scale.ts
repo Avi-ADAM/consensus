@@ -14,6 +14,8 @@ export interface Opinion {
 	kind: OpinionKind;
 	/** Where the author placed themselves — an input signal, distinct from the derived `location`. */
 	selfPlacement?: number;
+	/** External id of the author, for ownership checks (clause editing). */
+	authorExternalId?: string;
 }
 
 export type InsertMode =

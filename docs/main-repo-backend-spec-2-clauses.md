@@ -38,11 +38,11 @@
 היבט הוא ציר-משנה משותף של הנושא, שאליו נתלים סעיפים מכל הדעות. ההיבטים נוצרים
 בהדרגה: הדעה הראשונה מייצרת את המאגר הראשוני, וכל דעה חדשה מותאמת מולו.
 
-| שדה           | טיפוס                              | ברירת מחדל | הערה                                  |
-| ------------- | ---------------------------------- | ---------- | ------------------------------------- |
-| `negotiation` | relation manyToOne → `Negotiation` | —          | ההיבט שייך לדיון                       |
-| `title`       | string                             | —          | כותרת ההיבט (למשל "תקציב", "מי מחליט") |
-| `order`       | integer                            | `0`        | סדר תצוגה                             |
+| שדה           | טיפוס                              | ברירת מחדל | הערה                                    |
+| ------------- | ---------------------------------- | ---------- | --------------------------------------- |
+| `negotiation` | relation manyToOne → `Negotiation` | —          | ההיבט שייך לדיון                        |
+| `title`       | string                             | —          | כותרת ההיבט (למשל "תקציב", "מי מחליט")  |
+| `order`       | integer                            | `0`        | סדר תצוגה                               |
 | `origin`      | enum `ai` / `human`                | `ai`       | האם ה-AI זיהה אותו או משתמש הוסיף ידנית |
 
 צד הקשר ב-`Negotiation`: `issues` (oneToMany). צד הקשר ב-`Issue`: `clauses`
@@ -65,8 +65,8 @@
 | `position`          | relation manyToOne → `Position`         | —          | הסעיף שייך לדעה זו                              |
 | `issue`             | relation manyToOne → `Issue`            | —          | ההיבט שהסעיף עונה עליו (**nullable** עד שמסווג) |
 | `negotiation`       | relation manyToOne → `Negotiation`      | —          | לשיוך/סינון מהיר (כמו ב-`Argument`)             |
-| `authorExternalId`  | string                                  | —          | מתוך `__identity`                              |
-| `authorType`        | enum `registered` / `charter` / `guest` | —          | מתוך `__identity`                              |
+| `authorExternalId`  | string                                  | —          | מתוך `__identity`                               |
+| `authorType`        | enum `registered` / `charter` / `guest` | —          | מתוך `__identity`                               |
 
 צד הקשר ב-`Position`: `clauses` (oneToMany).
 
@@ -120,13 +120,18 @@
 הוא הבעלים (כמו כלל העריכה ב-`42UpdatePosition`). עדכון `stanceValue` ו-
 `confirmedByAuthor` מותר למחבר. אל תסמכו על author שמגיע מהלקוח.
 
-### 4.6 אופציונלי: הרחבת `39GetNegotiation`
+### 4.6 הרחבת `39GetNegotiation` — `authorExternalId` על positions (נדרש)
 
-אם תעדיפו טעינה אחת במקום קריאות נפרדות, אפשר להוסיף לתשובת `39GetNegotiation`
-את `issues { data { id attributes { title order origin } } }` ועל positions את
+עבור בדיקת בעלות בצד הלקוח (מי רשאי לערוך/לאשר את סעיפי הדעה), תשובת
+`39GetNegotiation` **חייבת להחזיר `authorExternalId` על כל position**.
+הקונצנזוס משווה אותו ל-`id` של המשתמש הרשום כדי להציג כלי עריכה רק לבעלים
+(השרת ממילא אוכף בעלות ב-`UpdateClause`/`42UpdatePosition`, אך בלי השדה הזה
+ה-UI לא יודע למי להציג את הכפתורים). הוסיפו גם `selfPlacement`.
+
+אם תעדיפו טעינה אחת במקום קריאות נפרדות, אפשר גם לקנן בתשובה
+`issues { data { id attributes { title order origin } } }` ועל positions את
 `clauses { data { id attributes { body stanceValue origin confirmedByAuthor
-issue { data { id } } } } }` ו-`selfPlacement`. לא חובה — `ListIssues`/`ListClauses`
-מספיקים.
+issue { data { id } } } } }`. לא חובה — `ListIssues`/`ListClauses` מספיקים.
 
 ---
 
@@ -150,6 +155,7 @@ issue { data { id } } } } }` ו-`selfPlacement`. לא חובה — `ListIssues`/
 - [ ] content-type חדש `Clause` (+ relations `Position.clauses`, `Issue.clauses`, `Clause.negotiation`)
 - [ ] הרחבת `Position`: שדה `selfPlacement`
 - [ ] qids חדשים: `ListIssues`, `ListClauses`, `CreateIssue`, `CreateClause`, `UpdateClause`
-- [ ] (אופציונלי) הרחבת `39GetNegotiation` לקנן issues+clauses+selfPlacement
+- [ ] `39GetNegotiation` מחזיר `authorExternalId` ו-`selfPlacement` על positions (לבדיקת בעלות)
+- [ ] (אופציונלי) הרחבת `39GetNegotiation` לקנן issues+clauses
 - [ ] הרשאות הטוקן המוגבל מכסות את ה-content-types וה-qids החדשים בלבד
 - [ ] כתיבות clause/issue משתמשות ב-`__identity` כמקור אמת לזהות
