@@ -7,6 +7,8 @@ import {
 } from './api';
 import { locationFromClauses, type Clause, type Issue } from './scale';
 
+type OpinionText = Pick<OpinionInput, 'heading' | 'description'>;
+
 type FetchLike = typeof globalThis.fetch;
 
 interface DecomposedClause {
@@ -164,4 +166,71 @@ export async function decomposeAndPersist(
 	}
 
 	return result;
+}
+
+/**
+ * Fill one gap: draft and persist the clause an opinion is missing on a given
+ * issue, then re-derive its location from the full clause set. Returns the new
+ * clause, or null when the assistant/backend is unavailable.
+ */
+export async function fillGap(
+	input: {
+		negotiationId: string;
+		positionId: string;
+		topic: string;
+		opinion: OpinionText;
+		issue: Issue;
+		/** The opinion's current clauses, so the location can be re-derived. */
+		existingClauses: Clause[];
+	},
+	fetch: FetchLike = globalThis.fetch
+): Promise<Clause | null> {
+	const res = await fetch('/api/suggest-clause', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			topic: input.topic,
+			heading: input.opinion.heading,
+			description: input.opinion.description,
+			issueTitle: input.issue.title
+		})
+	}).catch(() => null);
+	if (!res) return null;
+
+	const out = await res.json();
+	if (!out.available) return null;
+
+	const body = String(out.data?.body ?? '').trim();
+	if (!body) return null;
+	const stanceValue = clampStance(out.data?.stanceValue);
+
+	const clauseId = await createClause(
+		{
+			negotiationId: input.negotiationId,
+			positionId: input.positionId,
+			issueId: input.issue.id,
+			body,
+			stanceValue,
+			origin: 'ai'
+		},
+		fetch
+	).catch(() => null);
+	if (!clauseId) return null;
+
+	const created: Clause = {
+		id: clauseId,
+		positionId: input.positionId,
+		issueId: input.issue.id,
+		body,
+		stanceValue,
+		origin: 'ai',
+		confirmedByAuthor: false
+	};
+
+	const derived = locationFromClauses([...input.existingClauses, created]);
+	if (derived !== null) {
+		await updatePositionLocation(input.positionId, Math.round(derived), fetch).catch(() => {});
+	}
+
+	return created;
 }

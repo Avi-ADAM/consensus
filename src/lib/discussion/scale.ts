@@ -12,6 +12,8 @@ export interface Opinion {
 	isAnchor: boolean;
 	pole: Pole;
 	kind: OpinionKind;
+	/** Where the author placed themselves — an input signal, distinct from the derived `location`. */
+	selfPlacement?: number;
 }
 
 export type InsertMode =

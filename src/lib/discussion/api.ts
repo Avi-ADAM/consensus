@@ -109,7 +109,8 @@ function toOpinion(node: any, index: number): Opinion {
 		color: colorFor(index),
 		isAnchor: Boolean(a.isAnchor),
 		pole: (a.pole as Pole) ?? 'none',
-		kind: (a.kind as OpinionKind) ?? 'opinion'
+		kind: (a.kind as OpinionKind) ?? 'opinion',
+		selfPlacement: typeof a.selfPlacement === 'number' ? a.selfPlacement : undefined
 	};
 }
 

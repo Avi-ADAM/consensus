@@ -4,21 +4,27 @@
 		colorFor,
 		insertLocation,
 		sortByLocation,
+		type Clause,
 		type InsertMode,
+		type Issue,
 		type Opinion
 	} from '$lib/discussion/scale';
 	import {
 		createArgument,
 		createPosition,
 		listArguments,
+		listClauses,
+		listIssues,
 		loadDiscussion,
 		supportArgument,
 		supportPosition,
 		type Argument,
 		type Stance
 	} from '$lib/discussion/api';
-	import { decomposeAndPersist } from '$lib/discussion/decompose';
+	import { decomposeAndPersist, fillGap } from '$lib/discussion/decompose';
 	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
+	import ClausesPanel from '$lib/discussion/ClausesPanel.svelte';
+	import IssueConsensusStrip from '$lib/discussion/IssueConsensusStrip.svelte';
 	import { permissionsFor } from '$lib/auth/permissions';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { page } from '$app/state';
@@ -74,11 +80,39 @@
 	let demoArgs = $state<Record<string, Argument[]>>({});
 	let openOpinion = $derived(opinions.find((o) => o.id === openId) ?? null);
 
+	// Clauses & issues (clause-level decomposition)
+	let issues = $state<Issue[]>([]);
+	let clauses = $state<Clause[]>([]);
+	let clausesOpenId = $state<string | null>(null);
+	let clausesLoading = $state(false);
+	let fillingIssueId = $state<string | null>(null);
+	let clausesOpinion = $derived(opinions.find((o) => o.id === clausesOpenId) ?? null);
+	let openClauses = $derived(clauses.filter((c) => c.positionId === clausesOpenId));
+
+	async function loadClauseData() {
+		if (!live) return;
+		try {
+			const [nextIssues, nextClauses] = await Promise.all([
+				listIssues(data.id),
+				listClauses(data.id)
+			]);
+			issues = nextIssues;
+			clauses = nextClauses;
+		} catch {
+			issues = [];
+			clauses = [];
+		}
+	}
+
 	$effect(() => {
 		const _id = data.id; // track navigation to reset the local overlay
 		localOpinions = null;
 		voted.clear();
 		openId = null;
+		clausesOpenId = null;
+		issues = [];
+		clauses = [];
+		loadClauseData();
 	});
 
 	// Add-opinion flow
@@ -111,6 +145,39 @@
 	async function refresh() {
 		const fresh = await loadDiscussion(data.id);
 		if (fresh) localOpinions = fresh.opinions;
+		await loadClauseData();
+	}
+
+	function openClausesPanel(id: string) {
+		clausesOpenId = id;
+		if (live && clauses.length === 0 && issues.length === 0) {
+			clausesLoading = true;
+			loadClauseData().finally(() => (clausesLoading = false));
+		}
+	}
+
+	function closeClausesPanel() {
+		clausesOpenId = null;
+	}
+
+	async function fillGapClause(issue: Issue) {
+		if (!live || !clausesOpinion || fillingIssueId) return;
+		fillingIssueId = issue.id;
+		try {
+			await fillGap({
+				negotiationId: data.id,
+				positionId: clausesOpinion.id,
+				topic,
+				opinion: { heading: clausesOpinion.heading, description: clausesOpinion.description },
+				issue,
+				existingClauses: openClauses
+			});
+			await refresh();
+		} catch {
+			/* leave the panel open; the gap simply stays */
+		} finally {
+			fillingIssueId = null;
+		}
 	}
 
 	async function submit() {
@@ -322,6 +389,12 @@
 		{/if}
 	</div>
 
+	{#if issues.length > 0}
+		<div class="mx-auto mt-6 max-w-3xl">
+			<IssueConsensusStrip {issues} {clauses} />
+		</div>
+	{/if}
+
 	<div class="mt-10">
 		<Spectrum
 			{opinions}
@@ -330,6 +403,7 @@
 			oninsert={openForm}
 			onsupport={support}
 			onopen={openPanel}
+			onclauses={openClausesPanel}
 		/>
 	</div>
 </main>
@@ -427,5 +501,20 @@
 		oncreate={createArg}
 		onsupport={supportArg}
 		onclose={closePanel}
+	/>
+{/if}
+
+{#if clausesOpenId && clausesOpinion}
+	<ClausesPanel
+		title={clausesOpinion.heading}
+		clauses={openClauses}
+		{issues}
+		selfPlacement={clausesOpinion.selfPlacement}
+		derivedLocation={clausesOpinion.location}
+		canAdd={perms.propose}
+		loading={clausesLoading}
+		{fillingIssueId}
+		onfill={fillGapClause}
+		onclose={closeClausesPanel}
 	/>
 {/if}
