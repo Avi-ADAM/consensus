@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Spectrum from '$lib/discussion/Spectrum.svelte';
+	import ConsensusField from '$lib/discussion/ConsensusField.svelte';
 	import {
 		colorFor,
 		insertLocation,
@@ -34,7 +34,7 @@
 	} from '$lib/discussion/decompose';
 	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
 	import ClausesPanel from '$lib/discussion/ClausesPanel.svelte';
-	import IssueConsensusStrip from '$lib/discussion/IssueConsensusStrip.svelte';
+	import IssueHealth from '$lib/discussion/IssueHealth.svelte';
 	import IssueMatrix from '$lib/discussion/IssueMatrix.svelte';
 	import SynthesisPreview from '$lib/discussion/SynthesisPreview.svelte';
 	import { permissionsFor } from '$lib/auth/permissions';
@@ -517,24 +517,24 @@
 
 	{#if issues.length > 0}
 		<div class="mx-auto mt-6 max-w-3xl space-y-3">
-			<IssueConsensusStrip {issues} {clauses} />
+			<IssueHealth {issues} {clauses} />
 			<div class="flex flex-wrap items-center justify-between gap-3">
-				<div class="inline-flex rounded-full border border-white/15 p-0.5 text-sm">
+				<div class="inline-flex rounded-full border border-white/10 bg-white/5 p-1 text-sm">
 					<button
 						type="button"
 						onclick={() => (view = 'spectrum')}
-						class="rounded-full px-3 py-1 {view === 'spectrum'
-							? 'bg-white/15 text-white'
-							: 'text-white/60'}"
+						class="rounded-full px-4 py-1.5 font-medium transition {view === 'spectrum'
+							? 'bg-white/15 text-white shadow-sm'
+							: 'text-white/55 hover:text-white/85'}"
 					>
 						ספקטרום
 					</button>
 					<button
 						type="button"
 						onclick={() => (view = 'matrix')}
-						class="rounded-full px-3 py-1 {view === 'matrix'
-							? 'bg-white/15 text-white'
-							: 'text-white/60'}"
+						class="rounded-full px-4 py-1.5 font-medium transition {view === 'matrix'
+							? 'bg-white/15 text-white shadow-sm'
+							: 'text-white/55 hover:text-white/85'}"
 					>
 						מטריצת היבטים
 					</button>
@@ -545,7 +545,7 @@
 							type="button"
 							onclick={proposeSynthesis}
 							disabled={synthBusy}
-							class="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-100 hover:bg-emerald-500/20 disabled:opacity-50"
+							class="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/20 disabled:opacity-50"
 						>
 							{synthBusy ? 'מפיק נוסחת אמצע…' : '✨ הצע נוסחת אמצע'}
 						</button>
@@ -564,8 +564,9 @@
 		</div>
 	{:else}
 		<div class="mt-10">
-			<Spectrum
+			<ConsensusField
 				{opinions}
+				{clauses}
 				canPropose={perms.propose}
 				canVote={perms.vote}
 				oninsert={openForm}
@@ -676,6 +677,7 @@
 {#if clausesOpenId && clausesOpinion}
 	<ClausesPanel
 		title={clausesOpinion.heading}
+		color={clausesOpinion.color}
 		clauses={openClauses}
 		{issues}
 		selfPlacement={clausesOpinion.selfPlacement}

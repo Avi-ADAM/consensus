@@ -456,10 +456,15 @@
 
 <style>
 	/* ══════════════ BASE ══════════════ */
-	:global(*) {
-		margin: 0;
-		padding: 0;
-		box-sizing: border-box;
+	/* Keep the reset inside @layer base so Tailwind's @layer utilities
+	   (px-*, py-*, …) can still override it — an unlayered universal reset
+	   beats every layered utility and silently strips their padding. */
+	@layer base {
+		:global(*) {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
 	}
 
 	:global(html),

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Spectrum from './Spectrum.svelte';
+	import ConsensusField from './ConsensusField.svelte';
 	import ClausesPanel from './ClausesPanel.svelte';
-	import IssueConsensusStrip from './IssueConsensusStrip.svelte';
+	import IssueHealth from './IssueHealth.svelte';
 	import IssueMatrix from './IssueMatrix.svelte';
 	import SynthesisPreview from './SynthesisPreview.svelte';
 	import { colorFor, locationFromClauses, type Clause, type Issue, type Opinion } from './scale';
@@ -340,14 +340,14 @@
 		<span class="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-200"
 			>דמו אינטראקטיבי · נתוני דוגמה</span
 		>
-		<div class="ms-auto inline-flex rounded-full border border-white/15 p-0.5 text-xs">
+		<div class="ms-auto inline-flex rounded-full border border-white/10 bg-white/5 p-1 text-xs">
 			{#each SCENARIOS as scn (scn.id)}
 				<button
 					type="button"
 					onclick={() => selectScenario(scn.id)}
-					class="rounded-full px-3 py-1 {scenarioId === scn.id
-						? 'bg-white/15 text-white'
-						: 'text-white/60'}"
+					class="rounded-full px-3 py-1.5 font-medium transition {scenarioId === scn.id
+						? 'bg-white/15 text-white shadow-sm'
+						: 'text-white/55 hover:text-white/85'}"
 				>
 					{scn.label}
 				</button>
@@ -361,24 +361,24 @@
 	</p>
 
 	<div class="mt-4 space-y-3">
-		<IssueConsensusStrip {issues} {clauses} />
+		<IssueHealth {issues} {clauses} />
 		<div class="flex flex-wrap items-center justify-between gap-3">
-			<div class="inline-flex rounded-full border border-white/15 p-0.5 text-sm">
+			<div class="inline-flex rounded-full border border-white/10 bg-white/5 p-1 text-sm">
 				<button
 					type="button"
 					onclick={() => (view = 'spectrum')}
-					class="rounded-full px-3 py-1 {view === 'spectrum'
-						? 'bg-white/15 text-white'
-						: 'text-white/60'}"
+					class="rounded-full px-4 py-1.5 font-medium transition {view === 'spectrum'
+						? 'bg-white/15 text-white shadow-sm'
+						: 'text-white/55 hover:text-white/85'}"
 				>
 					ספקטרום
 				</button>
 				<button
 					type="button"
 					onclick={() => (view = 'matrix')}
-					class="rounded-full px-3 py-1 {view === 'matrix'
-						? 'bg-white/15 text-white'
-						: 'text-white/60'}"
+					class="rounded-full px-4 py-1.5 font-medium transition {view === 'matrix'
+						? 'bg-white/15 text-white shadow-sm'
+						: 'text-white/55 hover:text-white/85'}"
 				>
 					מטריצת היבטים
 				</button>
@@ -386,7 +386,7 @@
 			<button
 				type="button"
 				onclick={proposeSynthesis}
-				class="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-100 hover:bg-emerald-500/20"
+				class="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/20"
 			>
 				✨ הצע נוסחת אמצע
 			</button>
@@ -399,8 +399,9 @@
 		</div>
 	{:else}
 		<div class="mt-2">
-			<Spectrum
+			<ConsensusField
 				{opinions}
+				{clauses}
 				canPropose={false}
 				canVote={true}
 				onsupport={support}
@@ -413,6 +414,7 @@
 {#if clausesOpenId && clausesOpinion}
 	<ClausesPanel
 		title={clausesOpinion.heading}
+		color={clausesOpinion.color}
 		clauses={openClauses}
 		{issues}
 		selfPlacement={clausesOpinion.selfPlacement}
