@@ -8,6 +8,7 @@ import {
 	type Pole,
 	type OpinionKind
 } from './scale';
+import type { SourceMeta } from './bridge';
 
 type FetchLike = typeof globalThis.fetch;
 
@@ -21,6 +22,10 @@ export interface DiscussionMeta {
 	maxRounds: number;
 	currentRound: number;
 	places: { id: string; name: string }[];
+	/** Set when the discussion was bridged from an object in the main app. */
+	sourceType?: string;
+	sourceId?: string;
+	sourceMeta?: SourceMeta | null;
 }
 
 export interface LoadedDiscussion {
@@ -46,6 +51,10 @@ export interface CreateDiscussionInput {
 	ownOpinion: OpinionInput;
 	/** Opinions of others the creator optionally seeds (kept non-prominent in UI). */
 	otherOpinions?: OpinionInput[];
+	/** Link back to the main-app object this discussion mediates (bridge). */
+	sourceType?: string;
+	sourceId?: string;
+	sourceMeta?: SourceMeta;
 }
 
 export interface ProposeInput {
@@ -130,7 +139,10 @@ function mapNegotiation(node: any): LoadedDiscussion {
 			places: (a.places?.data ?? []).map((p: any) => ({
 				id: String(p.id),
 				name: attr(p).name ?? ''
-			}))
+			})),
+			sourceType: a.sourceType ? String(a.sourceType) : undefined,
+			sourceId: a.sourceId ? String(a.sourceId) : undefined,
+			sourceMeta: parseJson<SourceMeta | null>(a.sourceMeta, null)
 		},
 		opinions: (a.positions?.data ?? []).map(toOpinion)
 	};
@@ -150,6 +162,24 @@ export async function loadDiscussionByToken(
 	fetch: FetchLike = globalThis.fetch
 ): Promise<LoadedDiscussion | null> {
 	const res = await sendToSer<any>({ token }, 'GetNegotiationByToken', 0, 0, false, fetch);
+	const node = res?.data?.negotiations?.data?.[0] ?? res?.data?.negotiation?.data;
+	return node ? mapNegotiation(node) : null;
+}
+
+/** Find the discussion bridged from a main-app object (find-or-create lookup). */
+export async function loadDiscussionBySource(
+	sourceType: string,
+	sourceId: string,
+	fetch: FetchLike = globalThis.fetch
+): Promise<LoadedDiscussion | null> {
+	const res = await sendToSer<any>(
+		{ sourceType, sourceId },
+		'GetNegotiationBySource',
+		0,
+		0,
+		false,
+		fetch
+	);
 	const node = res?.data?.negotiations?.data?.[0] ?? res?.data?.negotiation?.data;
 	return node ? mapNegotiation(node) : null;
 }
@@ -186,7 +216,14 @@ export async function createDiscussion(
 			visibility: input.visibility,
 			shareToken,
 			isLocal: input.isLocal,
-			placeIds: input.placeIds.map((p) => Number(p))
+			placeIds: input.placeIds.map((p) => Number(p)),
+			...(input.sourceType && input.sourceId
+				? {
+						sourceType: input.sourceType,
+						sourceId: input.sourceId,
+						sourceMeta: input.sourceMeta ?? null
+					}
+				: {})
 		},
 		'40CreateNegotiation',
 		0,
