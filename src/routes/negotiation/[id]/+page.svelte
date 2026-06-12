@@ -33,6 +33,7 @@
 		type SynthesisDraft
 	} from '$lib/discussion/decompose';
 	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
+	import BridgeBar from '$lib/discussion/BridgeBar.svelte';
 	import ClausesPanel from '$lib/discussion/ClausesPanel.svelte';
 	import IssueHealth from '$lib/discussion/IssueHealth.svelte';
 	import IssueMatrix from '$lib/discussion/IssueMatrix.svelte';
@@ -499,6 +500,16 @@
 			<div class="mt-3 rounded-lg border border-white/15 bg-white/5 p-3 text-sm text-white/50">
 				מצב הדגמה — השרת אינו מחובר, השינויים אינם נשמרים.
 			</div>
+		{/if}
+
+		{#if meta?.sourceMeta && meta.sourceId}
+			<BridgeBar
+				sourceMeta={meta.sourceMeta}
+				sourceId={meta.sourceId}
+				{issues}
+				{clauses}
+				{opinions}
+			/>
 		{/if}
 
 		{#if data.user.type === 'charter'}

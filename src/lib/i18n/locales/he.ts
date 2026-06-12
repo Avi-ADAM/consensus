@@ -40,7 +40,33 @@ export const he = {
 	'new.submit': 'צור דיון',
 	'new.submitting': 'יוצר…',
 	'new.errorCreate': 'יצירת הדיון נכשלה. ודאו שהשרת מחובר ונסו שוב.',
-	'new.errorGeneric': 'שגיאה ביצירת הדיון. ודאו שהשרת מחובר ונסו שוב.'
+	'new.errorGeneric': 'שגיאה ביצירת הדיון. ודאו שהשרת מחובר ונסו שוב.',
+
+	'bridge.title': 'גשר מו"מ',
+	'bridge.intro':
+		'הגעתם מעמוד מו"מ באתר הראשי. כאן כל תנאי הופך להיבט בדיון, וכלי הקונצנזוס יעזרו לכם לגבש נוסחת אמצע — שתחזור לאישור בהצבעה הרגילה.',
+	'bridge.invalid': 'הקישור שהגעתם איתו אינו תקין או שפג תוקפו. חזרו לעמוד המו"מ ונסו שוב.',
+	'bridge.locked': 'פתיחת דיון גישור פתוחה למשתמשים רשומים בלבד.',
+	'bridge.lockedCta': 'התחברו',
+	'bridge.sourceProject': 'שותפות: {name}',
+	'bridge.fieldsTitle': 'התנאים על השולחן',
+	'bridge.original': 'קיים',
+	'bridge.proposed': 'מוצע',
+	'bridge.agreedBadge': 'מוסכם',
+	'bridge.create': 'פתיחת דיון גישור',
+	'bridge.creating': 'יוצר את הדיון…',
+	'bridge.errorCreate': 'יצירת דיון הגישור נכשלה. ודאו שהשרת מחובר ונסו שוב.',
+
+	'bridge.bar.title': 'דיון גישור על {title}',
+	'bridge.bar.hint': 'כשמתגבשת הסכמה, בחרו את ההצעה המסכמת והחזירו אותה לעמוד המו"מ באתר הראשי.',
+	'bridge.bar.choose': 'ההצעה המסכמת',
+	'bridge.bar.noSolution': 'עוד אין הצעת אמצע — אפשו ליצור אחת עם "הצע נוסחת אמצע".',
+	'bridge.bar.term': 'תנאי',
+	'bridge.bar.value': 'ערך מוסכם',
+	'bridge.bar.keep': 'ללא שינוי',
+	'bridge.bar.back': 'החזרת ההסכמה לעמוד המו"מ ←',
+	'bridge.bar.show': 'סיכום ההסכמה',
+	'bridge.bar.hide': 'הסתרת הסיכום'
 } as const;
 
 export type MessageKey = keyof typeof he;
