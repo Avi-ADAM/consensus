@@ -16,15 +16,25 @@ export const GET: RequestHandler = async ({ fetch }) => {
 	console.log('STRAPI_URL value:', STRAPI_URL)
 	if (!STRAPI_URL) return json({ places: [], _debug: 'STRAPI_URL is empty' } as unknown as { places: Place[] });
 
+	const targetUrl = `${STRAPI_URL.replace(/\/$/, '')}/graphql`;
+	console.log('[places] fetching:', targetUrl);
+	console.log('[places] runtime:', typeof window === 'undefined' ? 'server (Node)' : 'browser');
+
+	const start = Date.now();
 	try {
-		const res = await fetch(`${STRAPI_URL.replace(/\/$/, '')}/graphql`, {
+		const res = await fetch(targetUrl, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				query: `query { cuntries { data { id attributes { name } } } }`
-			})
+			}),
+			signal: AbortSignal.timeout(10_000)
 		});
+		console.log('[places] response status:', res.status, 'in', Date.now() - start, 'ms');
 		const data = await res.json();
+		console.log('[places] raw data keys:', Object.keys(data ?? {}));
+		if (data?.error) console.error('[places] graphql error:', JSON.stringify(data.error, null, 2));
+		if (data?.errors) console.error('[places] graphql errors:', JSON.stringify(data.errors, null, 2));
 		const places: Place[] = (data?.data?.cuntries?.data ?? []).map(
 			(c: { id: string | number; attributes?: { name?: string } }) => ({
 				id: String(c.id),
@@ -33,7 +43,10 @@ export const GET: RequestHandler = async ({ fetch }) => {
 		);
 		return json({ places });
 	} catch (e) {
-		console.error('places fetch error:', e);
+		const elapsed = Date.now() - start;
+		console.error(`[places] fetch error after ${elapsed}ms:`, e);
+		// @ts-expect-error cause exists on TypeError
+		if (e?.cause) console.error('[places] cause:', e.cause);
 		return json({ places: [] as Place[], _error: String(e) } as unknown as { places: Place[] });
 	}
 };
