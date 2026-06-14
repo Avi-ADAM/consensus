@@ -13,8 +13,8 @@ interface Place {
  * when env.STRAPI_URL is unset or the query fails, keeping the create form usable.
  */
 export const GET: RequestHandler = async ({ fetch }) => {
-	console.log(STRAPI_URL)
-	if (!STRAPI_URL) return json({ places: [] as Place[] });
+	console.log('STRAPI_URL value:', STRAPI_URL)
+	if (!STRAPI_URL) return json({ places: [], _debug: 'STRAPI_URL is empty' } as unknown as { places: Place[] });
 
 	try {
 		const res = await fetch(`${STRAPI_URL.replace(/\/$/, '')}/graphql`, {
