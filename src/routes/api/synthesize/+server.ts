@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { GROQ_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
@@ -20,7 +20,7 @@ async function callGroq(system: string, user: string): Promise<Record<string, un
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			Authorization: `Bearer ${GROQ_API_KEY}`
+			Authorization: `Bearer ${env.GROQ_API_KEY}`
 		},
 		body: JSON.stringify({
 			model: MODEL,
@@ -47,7 +47,7 @@ async function callGroq(system: string, user: string): Promise<Record<string, un
  * a rationale. Degrades gracefully (available:false) without a key.
  */
 export const POST: RequestHandler = async ({ request }) => {
-	if (!GROQ_API_KEY) {
+	if (!env.GROQ_API_KEY) {
 		return json({ available: false, reason: 'no_key' });
 	}
 
