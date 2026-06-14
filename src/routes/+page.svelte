@@ -4,7 +4,6 @@
 
 	let activeDiscussionsCount = $state(2847);
 	let heroVisible = $state(false);
-	let scrollY = $state(0);
 	let currentTestimonial = $state(0);
 
 	const features = [
@@ -66,6 +65,7 @@
 	];
 
 	// Reveal Action for Svelte 5
+	/** @param {HTMLElement} node */
 	function reveal(node) {
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -90,9 +90,6 @@
 	onMount(() => {
 		setTimeout(() => (heroVisible = true), 100);
 
-		const handleScroll = () => (scrollY = window.scrollY);
-		window.addEventListener('scroll', handleScroll, { passive: true });
-
 		const interval = setInterval(() => {
 			currentTestimonial = (currentTestimonial + 1) % testimonials.length;
 		}, 4000);
@@ -108,7 +105,6 @@
 		}, 30);
 
 		return () => {
-			window.removeEventListener('scroll', handleScroll);
 			clearInterval(interval);
 			clearInterval(counter);
 		};
@@ -159,7 +155,7 @@
 			<div class="orb orb-2"></div>
 			<div class="orb orb-3"></div>
 			<svg class="hero-grid" viewBox="0 0 100 100" preserveAspectRatio="none">
-				{#each Array(10) as _, i}
+				{#each Array(10) as _, i (i)}
 					<line
 						x1={i * 11}
 						y1="0"
@@ -272,7 +268,7 @@
 					</div>
 				</div>
 				<div class="positions-preview">
-					{#each ['3 ימים מהמשרד', '2 ימים מהבית', 'גמישות מלאה'] as pos, i}
+					{#each ['3 ימים מהמשרד', '2 ימים מהבית', 'גמישות מלאה'] as pos, i (pos)}
 						<div class="pos-chip" style="--delay: {i * 0.1}s">{pos}</div>
 					{/each}
 				</div>
@@ -293,7 +289,7 @@
 			</div>
 
 			<div class="features-grid">
-				{#each features as f, i}
+				{#each features as f, i (f.title)}
 					<div class="feature-card" style="--i: {i}" use:reveal>
 						<div class="feature-icon">{f.icon}</div>
 						<h3>{f.title}</h3>
@@ -315,7 +311,7 @@
 			</div>
 
 			<div class="steps">
-				{#each steps as step, i}
+				{#each steps as step, i (step.num)}
 					<div class="step" style="--i: {i}" use:reveal>
 						<div class="step-num">{step.num}</div>
 						<div class="step-content">
@@ -353,7 +349,7 @@
 			</div>
 
 			<div class="testimonials-carousel">
-				{#each testimonials as t, i}
+				{#each testimonials as t, i (t.author)}
 					<div
 						class="testimonial"
 						class:active={i === currentTestimonial}
@@ -372,7 +368,7 @@
 				{/each}
 
 				<div class="carousel-dots">
-					{#each testimonials as _, i}
+					{#each testimonials as _, i (i)}
 						<button
 							class="dot"
 							class:active={i === currentTestimonial}
@@ -869,7 +865,6 @@
 
 	.stat span {
 		font-size: 0.8rem;
-		color: #6060808;
 		color: #60608a;
 		font-family: 'Sora', sans-serif;
 	}
@@ -1529,7 +1524,6 @@
 		font-weight: 600;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
-		color: #5050808;
 		color: #505080;
 		margin-bottom: 1rem;
 	}

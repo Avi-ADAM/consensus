@@ -39,5 +39,12 @@ export default defineConfig(
 				svelteConfig
 			}
 		}
+	},
+	{
+		// Marketing pages mix external URLs with not-yet-created placeholder
+		// routes (/faq, /privacy, /terms); resolve() can't type those paths.
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
 	}
 );
