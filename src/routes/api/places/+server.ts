@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { STRAPI_URL } from '$env/static/private';
 
 interface Place {
 	id: string;
@@ -13,11 +13,10 @@ interface Place {
  * when STRAPI_URL is unset or the query fails, keeping the create form usable.
  */
 export const GET: RequestHandler = async ({ fetch }) => {
-	const base = env.STRAPI_URL;
-	if (!base) return json({ places: [] as Place[] });
+	if (!STRAPI_URL) return json({ places: [] as Place[] });
 
 	try {
-		const res = await fetch(`${base.replace(/\/$/, '')}/graphql`, {
+		const res = await fetch(`${STRAPI_URL.replace(/\/$/, '')}/graphql`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
