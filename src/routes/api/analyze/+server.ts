@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { GROQ_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'llama-3.3-70b-versatile';
@@ -23,7 +23,7 @@ async function callGroq(system: string, user: string): Promise<Record<string, un
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			Authorization: `Bearer ${GROQ_API_KEY}`
+			Authorization: `Bearer ${env.GROQ_API_KEY}`
 		},
 		body: JSON.stringify({
 			model: MODEL,
@@ -48,11 +48,11 @@ async function callGroq(system: string, user: string): Promise<Record<string, un
  * user's own placement. The opinion need not sit at the midpoint — landing close
  * to an existing opinion is valid, meaningful progress.
  *
- * Degrades gracefully (200 with available:false) when no GROQ_API_KEY is set or
+ * Degrades gracefully (200 with available:false) when no env.GROQ_API_KEY is set or
  * the upstream call fails, so the discussion UI keeps working without AI.
  */
 export const POST: RequestHandler = async ({ request }) => {
-	if (!GROQ_API_KEY) {
+	if (!env.GROQ_API_KEY) {
 		return json({ available: false, reason: 'no_key' });
 	}
 

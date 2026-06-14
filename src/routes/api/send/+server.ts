@@ -1,5 +1,5 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
-import { MAIN_APP_URL, PROXY_SHARED_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { authorizeSend } from '$lib/server/sendPolicy';
 
 interface SendBody {
@@ -24,9 +24,9 @@ interface SendBody {
  * so charter/guest users cannot impersonate anyone.
  */
 export const POST: RequestHandler = async ({ request, fetch, locals }) => {
-	const target = MAIN_APP_URL;
+	const target = env.MAIN_APP_URL;
 	if (!target) {
-		throw error(500, 'MAIN_APP_URL is not configured');
+		throw error(500, 'env.MAIN_APP_URL is not configured');
 	}
 
 	let body: SendBody;
@@ -60,8 +60,8 @@ export const POST: RequestHandler = async ({ request, fetch, locals }) => {
 		'Content-Type': 'application/json',
 		cookie: request.headers.get('cookie') ?? ''
 	};
-	if (PROXY_SHARED_SECRET) {
-		headers['x-consensus-secret'] = PROXY_SHARED_SECRET;
+	if (env.PROXY_SHARED_SECRET) {
+		headers['x-consensus-secret'] = env.PROXY_SHARED_SECRET;
 	}
 
 	const upstream = await fetch(`${target.replace(/\/$/, '')}/api/send`, {
