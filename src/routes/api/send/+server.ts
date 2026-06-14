@@ -26,7 +26,7 @@ interface SendBody {
 export const POST: RequestHandler = async ({ request, fetch, locals }) => {
 	const target = env.MAIN_APP_URL;
 	if (!target) {
-		throw error(500, 'MAIN_APP_URL is not configured');
+		throw error(500, 'env.MAIN_APP_URL is not configured');
 	}
 
 	let body: SendBody;

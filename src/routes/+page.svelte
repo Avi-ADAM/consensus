@@ -1,85 +1,150 @@
 <script>
-  import { onMount } from 'svelte';
+	import { onMount } from 'svelte';
+	import DiscussionDemo from '$lib/discussion/DiscussionDemo.svelte';
 
-  let activeDiscussionsCount = $state(2847);
-  let heroVisible = $state(false);
-  let scrollY = $state(0);
-  let currentTestimonial = $state(0);
+	let activeDiscussionsCount = $state(2847);
+	let heroVisible = $state(false);
+	let currentTestimonial = $state(0);
 
-  const features = [
-    { icon: '🧠', title: 'AI מנחה חכם', desc: 'בינה מלאכותית מזהה ממדי מחלוקת ומציעה נוסחאות גישור בזמן אמת' },
-    { icon: '🔄', title: 'סבבי שיפור', desc: 'כל סבב מצמצם פערים — המערכת מודדת קרבה לקונצנזוס' },
-    { icon: '🌍', title: 'RTL ראשוני', desc: 'עברית, ערבית ואנגלית — חווית משתמש מלאה בכל שפה' },
-    { icon: '⚡', title: 'עדכון מיידי', desc: 'Optimistic UI — שינויים מופיעים רגע לפני אישור השרת' },
-    { icon: '🗺️', title: 'מפת מחלוקות', desc: 'ראה אילו נושאים "חמים" באזורך ומצא דיונים רלוונטיים' },
-    { icon: '🔒', title: 'פרטיות מלאה', desc: 'SSO מאובטח, עוגיות httpOnly, אפשרות השתתפות כאורח' },
-  ];
+	const features = [
+		{
+			icon: '🧠',
+			title: 'AI מנחה חכם',
+			desc: 'בינה מלאכותית מזהה ממדי מחלוקת ומציעה נוסחאות גישור בזמן אמת'
+		},
+		{ icon: '🔄', title: 'סבבי שיפור', desc: 'כל סבב מצמצם פערים — המערכת מודדת קרבה לקונצנזוס' },
+		{ icon: '🌍', title: 'RTL ראשוני', desc: 'עברית, ערבית ואנגלית — חווית משתמש מלאה בכל שפה' },
+		{
+			icon: '⚡',
+			title: 'עדכון מיידי',
+			desc: 'Optimistic UI — שינויים מופיעים רגע לפני אישור השרת'
+		},
+		{
+			icon: '🗺️',
+			title: 'מפת מחלוקות',
+			desc: 'ראה אילו נושאים "חמים" באזורך ומצא דיונים רלוונטיים'
+		},
+		{ icon: '🔒', title: 'פרטיות מלאה', desc: 'SSO מאובטח, עוגיות httpOnly, אפשרות השתתפות כאורח' }
+	];
 
-  const steps = [
-    { num: '01', title: 'הגדר נושא', desc: 'כתב את המחלוקת במשפט אחד ברור. AI עוזר לנסח בצורה ניטרלית.' },
-    { num: '02', title: 'הצע עמדה', desc: 'כל משתתף מציע את עמדתו. AI ממפה ממדי הסכמה ומחלוקת.' },
-    { num: '03', title: 'תמוך ושכלל', desc: 'תמוך בעמדות אחרים, הצבע על ממדי הסכמה, שפר את עמדתך.' },
-    { num: '04', title: 'הגע להסכמה', desc: 'המערכת מזהה נוסחה שכולם יכולים לחיות איתה. הסכם נוצר.' },
-  ];
+	const steps = [
+		{
+			num: '01',
+			title: 'הגדר נושא',
+			desc: 'כתב את המחלוקת במשפט אחד ברור. AI עוזר לנסח בצורה ניטרלית.'
+		},
+		{ num: '02', title: 'הצע עמדה', desc: 'כל משתתף מציע את עמדתו. AI ממפה ממדי הסכמה ומחלוקת.' },
+		{
+			num: '03',
+			title: 'תמוך ושכלל',
+			desc: 'תמוך בעמדות אחרים, הצבע על ממדי הסכמה, שפר את עמדתך.'
+		},
+		{
+			num: '04',
+			title: 'הגע להסכמה',
+			desc: 'המערכת מזהה נוסחה שכולם יכולים לחיות איתה. הסכם נוצר.'
+		}
+	];
 
-  const testimonials = [
-    { text: 'הפלטפורמה שינתה איך הצוות שלנו מקבל החלטות. פחות ויכוחים, יותר הסכמות אמיתיות.', author: 'ד"ר מיכל לוי', role: 'מנהלת מוצר, SaaS' },
-    { text: 'ניסינו לפתור ויכוח שנמשך חודשים. בשלושה סבבים הגענו להסכמה שאף אחד לא צפה.', author: 'אהמד חסן', role: 'עורך דין, תל אביב' },
-    { text: 'הכלי המושלם לדיונים קהילתיים. AI שמנחה בלי לשפוט — בדיוק מה שחיפשנו.', author: 'שרה כהן', role: 'ראש מועצה שכונתית' },
-  ];
+	const testimonials = [
+		{
+			text: 'הפלטפורמה שינתה איך הצוות שלנו מקבל החלטות. פחות ויכוחים, יותר הסכמות אמיתיות.',
+			author: 'ד"ר מיכל לוי',
+			role: 'מנהלת מוצר, SaaS'
+		},
+		{
+			text: 'ניסינו לפתור ויכוח שנמשך חודשים. בשלושה סבבים הגענו להסכמה שאף אחד לא צפה.',
+			author: 'אהמד חסן',
+			role: 'עורך דין, תל אביב'
+		},
+		{
+			text: 'הכלי המושלם לדיונים קהילתיים. AI שמנחה בלי לשפוט — בדיוק מה שחיפשנו.',
+			author: 'שרה כהן',
+			role: 'ראש מועצה שכונתית'
+		}
+	];
 
-  // Reveal Action for Svelte 5
-  function reveal(node) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          node.classList.add('visible');
-          observer.unobserve(node);
-        }
-      });
-    }, { threshold: 0.1 });
+	// Reveal Action for Svelte 5
+	/** @param {HTMLElement} node */
+	function reveal(node) {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						node.classList.add('visible');
+						observer.unobserve(node);
+					}
+				});
+			},
+			{ threshold: 0.1 }
+		);
 
-    observer.observe(node);
-    return {
-      destroy() {
-        observer.disconnect();
-      }
-    };
-  }
+		observer.observe(node);
+		return {
+			destroy() {
+				observer.disconnect();
+			}
+		};
+	}
 
-  onMount(() => {
-    setTimeout(() => heroVisible = true, 100);
+	onMount(() => {
+		setTimeout(() => (heroVisible = true), 100);
 
-    const handleScroll = () => scrollY = window.scrollY;
-    window.addEventListener('scroll', handleScroll, { passive: true });
+		const interval = setInterval(() => {
+			currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+		}, 4000);
 
-    const interval = setInterval(() => {
-      currentTestimonial = (currentTestimonial + 1) % testimonials.length;
-    }, 4000);
+		// Animate counter
+		let count = 0;
+		const target = 2847;
+		const step = Math.ceil(target / 60);
+		const counter = setInterval(() => {
+			count = Math.min(count + step, target);
+			activeDiscussionsCount = count;
+			if (count >= target) clearInterval(counter);
+		}, 30);
 
-    // Animate counter
-    let count = 0;
-    const target = 2847;
-    const step = Math.ceil(target / 60);
-    const counter = setInterval(() => {
-      count = Math.min(count + step, target);
-      activeDiscussionsCount = count;
-      if (count >= target) clearInterval(counter);
-    }, 30);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearInterval(interval);
-      clearInterval(counter);
-    };
-  });
+		return () => {
+			clearInterval(interval);
+			clearInterval(counter);
+		};
+	});
 </script>
 
 <svelte:head>
-  <title>Consensus — פלטפורמת יישוב מחלוקות</title>
-  <meta name="description" content="AI-powered dispute resolution platform" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap" />
+	<title>consensus · פה אחד — פלטפורמת יישוב מחלוקות</title>
+	<meta
+		name="description"
+		content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה."
+	/>
+
+	<!-- Open Graph -->
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://consensus.1lev1.com/" />
+	<meta property="og:site_name" content="consensus · פה אחד" />
+	<meta property="og:title" content="consensus · פה אחד — פלטפורמת יישוב מחלוקות" />
+	<meta
+		property="og:description"
+		content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה."
+	/>
+	<meta property="og:image" content="https://consensus.1lev1.com/logo.png" />
+	<meta property="og:image:alt" content="consensus · פה אחד" />
+	<meta property="og:locale" content="he_IL" />
+
+	<!-- Twitter / X Card -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="consensus · פה אחד — פלטפורמת יישוב מחלוקות" />
+	<meta
+		name="twitter:description"
+		content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה."
+	/>
+	<meta name="twitter:image" content="https://consensus.1lev1.com/logo.png" />
+
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link
+		rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap"
+	/>
 </svelte:head>
 
 <main dir="rtl" lang="he">
@@ -107,8 +172,8 @@
         <div class="nav-links">
           <a href="/faq">שאלות נפוצות</a>
           <a href="/negotiation/local">מפת דיונים</a>
-          <a href="https://www.1lev1.com/login" class="nav-login">כניסה</a>
-          <a href="https://www.1lev1.com/signup" class="nav-cta">הצטרף</a>
+          <a href="https://www.1lev1.com/login?from=https://consensus.1lev1.com" class="nav-login">כניסה</a>
+          <a href="https://www.1lev1.com/?from=https://consensus.1lev1.com" class="nav-cta">הצטרף</a>
         </div>
       </div>
     </nav>

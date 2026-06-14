@@ -16,6 +16,7 @@
 		oninsert?: (mode: InsertMode) => void;
 		onsupport?: (id: string) => void;
 		onopen?: (id: string) => void;
+		onclauses?: (id: string) => void;
 	}
 
 	let {
@@ -24,7 +25,8 @@
 		canVote = false,
 		oninsert = () => {},
 		onsupport = () => {},
-		onopen = () => {}
+		onopen = () => {},
+		onclauses = () => {}
 	}: Props = $props();
 
 	let sorted = $derived(sortByLocation(opinions));
@@ -133,6 +135,13 @@
 						onclick={() => onopen(opinion.id)}
 					>
 						יתרונות/חסרונות
+					</button>
+					<button
+						type="button"
+						class="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70 hover:bg-white/20"
+						onclick={() => onclauses(opinion.id)}
+					>
+						סעיפים
 					</button>
 				</div>
 			</div>
