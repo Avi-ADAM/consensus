@@ -32,7 +32,8 @@ export const GET: RequestHandler = async ({ fetch }) => {
 			})
 		);
 		return json({ places });
-	} catch {
-		return json({ places: [] as Place[] });
+	} catch (e) {
+		console.error('places fetch error:', e);
+		return json({ places: [] as Place[], _error: String(e) } as unknown as { places: Place[] });
 	}
 };
