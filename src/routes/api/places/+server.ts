@@ -26,11 +26,16 @@ export const GET: RequestHandler = async ({ fetch }) => {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				query: `query { cuntries { data { id attributes { name } } } }`
+				query: `query { cuntries(pagination: { limit: -1 }) { data { id attributes { name } } } }`
 			}),
 			signal: AbortSignal.timeout(10_000)
 		});
 		console.log('[places] response status:', res.status, 'in', Date.now() - start, 'ms');
+		if (!res.ok) {
+			const body = await res.text();
+			console.error(`[places] non-ok response (${res.status}):`, body.slice(0, 300));
+			return json({ places: [] as Place[], _error: `HTTP ${res.status}` } as unknown as { places: Place[] });
+		}
 		const data = await res.json();
 		console.log('[places] raw data keys:', Object.keys(data ?? {}));
 		if (data?.error) console.error('[places] graphql error:', JSON.stringify(data.error, null, 2));
@@ -41,6 +46,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
 				name: c.attributes?.name ?? ''
 			})
 		);
+		console.log('[places] places:', places.length);
 		return json({ places });
 	} catch (e) {
 		const elapsed = Date.now() - start;
