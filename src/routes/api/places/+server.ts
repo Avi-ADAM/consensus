@@ -9,12 +9,11 @@ interface Place {
 /**
  * List places (currently countries). The `cuntries` collection is a public,
  * unauthenticated GraphQL query in the shared Strapi — the same one the main
- * app's `love` page reads — so we query it directly. Degrades to an empty list
- * when STRAPI_URL is unset or the query fails, keeping the create form usable.
+ * app's `love` page reads — so we query it directly. Falls back to the default
+ * Strapi host when STRAPI_URL is unset; degrades to an empty list only on error.
  */
 export const GET: RequestHandler = async ({ fetch }) => {
-	const base = env.STRAPI_URL;
-	if (!base) return json({ places: [] as Place[] });
+	const base = env.STRAPI_URL ?? 'https://api.1lev1.com';
 
 	try {
 		const res = await fetch(`${base.replace(/\/$/, '')}/graphql`, {
