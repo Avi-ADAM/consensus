@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
+
 	interface Place {
 		id: string;
 		name: string;
@@ -24,11 +26,11 @@
 </script>
 
 {#if places.length === 0}
-	<p class="text-sm text-white/50">לא נטענו מקומות (יש להגדיר STRAPI_URL).</p>
+	<p class="text-sm text-white/50">{$_('place.noPlaces')}</p>
 {:else}
 	<input
 		bind:value={query}
-		placeholder="חיפוש מקום…"
+		placeholder={$_('place.searchPlaceholder')}
 		class="mb-2 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
 	/>
 	<div class="flex max-h-44 flex-wrap gap-2 overflow-y-auto">

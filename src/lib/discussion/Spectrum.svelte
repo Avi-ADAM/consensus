@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Tile from './Tile.svelte';
+	import { _ } from 'svelte-i18n';
 	import {
 		consensusScore,
 		sortByLocation,
@@ -53,7 +54,7 @@
 	>
 		<div class="h-px flex-1 bg-emerald-400/50 [border-top:1px_dashed_rgb(52_211_153/0.6)]"></div>
 		<span class="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200"
-			>מרכז הסכמה · {score}%</span
+			>{$_('spectrum.consensusCenter', { values: { score } })}</span
 		>
 		<div class="h-px flex-1 bg-emerald-400/50 [border-top:1px_dashed_rgb(52_211_153/0.6)]"></div>
 	</div>
@@ -66,7 +67,7 @@
 			style="top: 0"
 			onclick={() => oninsert({ mode: 'beyond_top' })}
 		>
-			➕ דעה קיצונית למעלה
+			{$_('spectrum.addExtreme')}
 		</button>
 	{/if}
 
@@ -112,21 +113,21 @@
 				/>
 				{#if opinion.isAnchor}
 					<span class="mr-1 text-[10px] text-white/40"
-						>{opinion.pole === 'top' ? 'עוגן עליון' : 'עוגן תחתון'}</span
+						>{opinion.pole === 'top' ? $_('spectrum.topAnchor') : $_('spectrum.bottomAnchor')}</span
 					>
 				{/if}
 				{#if big && opinion.description}
 					<p class="mt-1 text-xs leading-relaxed text-white/70">{opinion.description}</p>
 				{/if}
 				<div class="mt-1 flex items-center gap-2" class:justify-end={side === 'right'}>
-					<span class="text-xs text-white/50">{opinion.votes} תומכים</span>
+					<span class="text-xs text-white/50">{opinion.votes} {$_('spectrum.supporters')}</span>
 					{#if canVote}
 						<button
 							type="button"
 							class="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200 hover:bg-emerald-500/40"
 							onclick={() => onsupport(opinion.id)}
 						>
-							תמיכה
+							{$_('spectrum.support')}
 						</button>
 					{/if}
 					<button
@@ -134,14 +135,14 @@
 						class="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70 hover:bg-white/20"
 						onclick={() => onopen(opinion.id)}
 					>
-						יתרונות/חסרונות
+						{$_('spectrum.arguments')}
 					</button>
 					<button
 						type="button"
 						class="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70 hover:bg-white/20"
 						onclick={() => onclauses(opinion.id)}
 					>
-						סעיפים
+						{$_('spectrum.clauses')}
 					</button>
 				</div>
 			</div>
@@ -169,7 +170,7 @@
 			class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full rounded-full border border-violet-400/40 bg-violet-500/20 px-3 py-1 text-sm text-violet-100 hover:bg-violet-500/40"
 			onclick={() => oninsert({ mode: 'beyond_bottom' })}
 		>
-			➕ דעה קיצונית למטה
+			{$_('spectrum.addExtreme')}
 		</button>
 	{/if}
 </div>

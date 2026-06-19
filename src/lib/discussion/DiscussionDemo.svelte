@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
 	import ConsensusField from './ConsensusField.svelte';
 	import ClausesPanel from './ClausesPanel.svelte';
 	import IssueHealth from './IssueHealth.svelte';
@@ -335,10 +336,10 @@
 	}
 </script>
 
-<div class="rounded-3xl border border-white/10 bg-[#0d0d18] p-4 sm:p-6" dir="rtl">
+<div class="rounded-3xl border border-white/10 bg-[#0d0d18] p-4 sm:p-6">
 	<div class="flex flex-wrap items-center gap-2">
 		<span class="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-200"
-			>דמו אינטראקטיבי · נתוני דוגמה</span
+			>{$_('demoInteractive.badge')}</span
 		>
 		<div class="ms-auto inline-flex rounded-full border border-white/10 bg-white/5 p-1 text-xs">
 			{#each SCENARIOS as scn (scn.id)}
@@ -356,9 +357,7 @@
 	</div>
 
 	<h3 class="mt-3 text-lg font-bold text-white">{active.topic}</h3>
-	<p class="mt-1 text-sm text-white/50">
-		לחצו "סעיפים" על דעה כדי לראות את הפירוק להיבטים, השלימו סעיף חסר, או הציעו נוסחת אמצע.
-	</p>
+	<p class="mt-1 text-sm text-white/50">{$_('demoInteractive.instruction')}</p>
 
 	<div class="mt-4 space-y-3">
 		<IssueHealth {issues} {clauses} />
@@ -371,7 +370,7 @@
 						? 'bg-white/15 text-white shadow-sm'
 						: 'text-white/55 hover:text-white/85'}"
 				>
-					ספקטרום
+					{$_('discussion.spectrum')}
 				</button>
 				<button
 					type="button"
@@ -380,7 +379,7 @@
 						? 'bg-white/15 text-white shadow-sm'
 						: 'text-white/55 hover:text-white/85'}"
 				>
-					מטריצת היבטים
+					{$_('discussion.matrix')}
 				</button>
 			</div>
 			<button
@@ -388,7 +387,7 @@
 				onclick={proposeSynthesis}
 				class="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/20"
 			>
-				✨ הצע נוסחת אמצע
+				{$_('discussion.synthesize')}
 			</button>
 		</div>
 	</div>

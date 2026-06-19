@@ -1,68 +1,51 @@
 <script>
 	import { onMount } from 'svelte';
+	import { _ } from 'svelte-i18n';
+	import { locale } from '$lib/i18n';
 	import DiscussionDemo from '$lib/discussion/DiscussionDemo.svelte';
 
 	let activeDiscussionsCount = $state(2847);
 	let heroVisible = $state(false);
 	let currentTestimonial = $state(0);
 
-	const features = [
-		{
-			icon: '🧠',
-			title: 'AI מנחה חכם',
-			desc: 'בינה מלאכותית מזהה ממדי מחלוקת ומציעה נוסחאות גישור בזמן אמת'
-		},
-		{ icon: '🔄', title: 'סבבי שיפור', desc: 'כל סבב מצמצם פערים — המערכת מודדת קרבה לקונצנזוס' },
-		{ icon: '🌍', title: 'RTL ראשוני', desc: 'עברית, ערבית ואנגלית — חווית משתמש מלאה בכל שפה' },
-		{
-			icon: '⚡',
-			title: 'עדכון מיידי',
-			desc: 'Optimistic UI — שינויים מופיעים רגע לפני אישור השרת'
-		},
-		{
-			icon: '🗺️',
-			title: 'מפת מחלוקות',
-			desc: 'ראה אילו נושאים "חמים" באזורך ומצא דיונים רלוונטיים'
-		},
-		{ icon: '🔒', title: 'פרטיות מלאה', desc: 'SSO מאובטח, עוגיות httpOnly, אפשרות השתתפות כאורח' }
-	];
+	const featureKeys = ['ai', 'rounds', 'rtl', 'realtime', 'disputeMap', 'privacy'];
+	const featureIcons = ['🧠', '🔄', '🌍', '⚡', '🗺️', '🔒'];
 
-	const steps = [
-		{
-			num: '01',
-			title: 'הגדר נושא',
-			desc: 'כתב את המחלוקת במשפט אחד ברור. AI עוזר לנסח בצורה ניטרלית.'
-		},
-		{ num: '02', title: 'הצע עמדה', desc: 'כל משתתף מציע את עמדתו. AI ממפה ממדי הסכמה ומחלוקת.' },
-		{
-			num: '03',
-			title: 'תמוך ושכלל',
-			desc: 'תמוך בעמדות אחרים, הצבע על ממדי הסכמה, שפר את עמדתך.'
-		},
-		{
-			num: '04',
-			title: 'הגע להסכמה',
-			desc: 'המערכת מזהה נוסחה שכולם יכולים לחיות איתה. הסכם נוצר.'
-		}
-	];
+	const stepKeys = ['s1', 's2', 's3', 's4'];
 
-	const testimonials = [
-		{
-			text: 'הפלטפורמה שינתה איך הצוות שלנו מקבל החלטות. פחות ויכוחים, יותר הסכמות אמיתיות.',
-			author: 'ד"ר מיכל לוי',
-			role: 'מנהלת מוצר, SaaS'
-		},
-		{
-			text: 'ניסינו לפתור ויכוח שנמשך חודשים. בשלושה סבבים הגענו להסכמה שאף אחד לא צפה.',
-			author: 'אהמד חסן',
-			role: 'עורך דין, תל אביב'
-		},
-		{
-			text: 'הכלי המושלם לדיונים קהילתיים. AI שמנחה בלי לשפוט — בדיוק מה שחיפשנו.',
-			author: 'שרה כהן',
-			role: 'ראש מועצה שכונתית'
-		}
-	];
+	const testimonialKeys = ['t1', 't2', 't3'];
+
+	let features = $derived(
+		featureKeys.map((k, i) => ({
+			icon: featureIcons[i],
+			title: $_(`home.features.${k}.title`),
+			desc: $_(`home.features.${k}.desc`)
+		}))
+	);
+
+	let steps = $derived(
+		stepKeys.map((k) => ({
+			num: $_(`home.steps.${k}.num`),
+			title: $_(`home.steps.${k}.title`),
+			desc: $_(`home.steps.${k}.desc`)
+		}))
+	);
+
+	let testimonials = $derived(
+		testimonialKeys.map((k) => ({
+			text: $_(`home.testimonials.${k}.text`),
+			author: $_(`home.testimonials.${k}.author`),
+			role: $_(`home.testimonials.${k}.role`)
+		}))
+	);
+
+	let demoPositions = $derived([
+		{ text: $_('home.demo.pos1'), score: 38, support: 9 },
+		{ text: $_('home.demo.pos2'), score: 72, support: 11 },
+		{ text: $_('home.demo.pos3'), score: 45, support: 4 }
+	]);
+
+	let countLocale = $derived($locale === 'he' ? 'he' : $locale === 'ar' ? 'ar' : 'en');
 
 	// Reveal Action for Svelte 5
 	/** @param {HTMLElement} node */
@@ -91,7 +74,7 @@
 		setTimeout(() => (heroVisible = true), 100);
 
 		const interval = setInterval(() => {
-			currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+			currentTestimonial = (currentTestimonial + 1) % testimonialKeys.length;
 		}, 4000);
 
 		// Animate counter
@@ -112,32 +95,23 @@
 </script>
 
 <svelte:head>
-	<title>consensus · פה אחד — פלטפורמת יישוב מחלוקות</title>
-	<meta
-		name="description"
-		content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה."
-	/>
+	<title>{$_('home.pageTitle')}</title>
+	<meta name="description" content={$_('home.pageDescription')} />
 
 	<!-- Open Graph -->
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://consensus.1lev1.com/" />
 	<meta property="og:site_name" content="consensus · פה אחד" />
-	<meta property="og:title" content="consensus · פה אחד — פלטפורמת יישוב מחלוקות" />
-	<meta
-		property="og:description"
-		content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה."
-	/>
+	<meta property="og:title" content={$_('home.pageTitle')} />
+	<meta property="og:description" content={$_('home.pageDescription')} />
 	<meta property="og:image" content="https://consensus.1lev1.com/logo.png" />
-	<meta property="og:image:alt" content="consensus · פה אחד" />
-	<meta property="og:locale" content="he_IL" />
+	<meta property="og:image:alt" content="consensus" />
+	<meta property="og:locale" content={$locale === 'he' ? 'he_IL' : $locale === 'ar' ? 'ar_IL' : 'en_US'} />
 
 	<!-- Twitter / X Card -->
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="consensus · פה אחד — פלטפורמת יישוב מחלוקות" />
-	<meta
-		name="twitter:description"
-		content="פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית. מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה."
-	/>
+	<meta name="twitter:title" content={$_('home.pageTitle')} />
+	<meta name="twitter:description" content={$_('home.pageDescription')} />
 	<meta name="twitter:image" content="https://consensus.1lev1.com/logo.png" />
 
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -147,7 +121,7 @@
 	/>
 </svelte:head>
 
-<main dir="rtl" lang="he">
+<main>
 
   <!-- ═══════════════════ HERO ═══════════════════ -->
   <section class="hero" class:visible={heroVisible}>
@@ -170,10 +144,10 @@
           <span class="logo-text">Consensus</span>
         </a>
         <div class="nav-links">
-          <a href="/faq">שאלות נפוצות</a>
-          <a href="/negotiation/local">מפת דיונים</a>
-          <a href="https://www.1lev1.com/login?from=https://consensus.1lev1.com" class="nav-login">כניסה</a>
-          <a href="https://www.1lev1.com/?from=https://consensus.1lev1.com" class="nav-cta">הצטרף</a>
+          <a href="/faq">{$_('nav.faq')}</a>
+          <a href="/negotiation/local">{$_('nav.map')}</a>
+          <a href="https://www.1lev1.com/login?from=https://consensus.1lev1.com" class="nav-login">{$_('nav.login')}</a>
+          <a href="https://www.1lev1.com/?from=https://consensus.1lev1.com" class="nav-cta">{$_('nav.join')}</a>
         </div>
       </div>
     </nav>
@@ -181,23 +155,23 @@
     <div class="hero-content">
       <div class="hero-badge">
         <span class="badge-dot"></span>
-        {activeDiscussionsCount.toLocaleString('he')} דיונים פעילים עכשיו
+        {$_('home.badge', { values: { count: activeDiscussionsCount.toLocaleString(countLocale) } })}
       </div>
 
       <h1 class="hero-title">
-        כשיורדים לפרטים<br/>
-        <em>תמיד</em> ניתן<br/>
-        למצוא הסכמה
+        {$_('home.heroTitle1')}<br/>
+        <em>{$_('home.heroTitle2')}</em><br/>
+        {$_('home.heroTitle3')}
       </h1>
 
       <p class="hero-sub">
-        פלטפורמת AI לניהול מחלוקות בצורה מובנית ואינטליגנטית.<br/>
-        מגדירים נושא, מציעים עמדות, ה-AI מוצא את הנוסחה שכולם יכולים לחיות איתה.
+        {$_('home.heroSub').split('\n')[0]}<br/>
+        {$_('home.heroSub').split('\n')[1] ?? ''}
       </p>
 
       <div class="hero-actions">
         <a href="/negotiation/new" class="btn-primary">
-          <span>התחל דיון</span>
+          <span>{$_('home.startDiscussion')}</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
@@ -206,16 +180,16 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
-          <span>צפה איך זה עובד</span>
+          <span>{$_('home.watchDemo')}</span>
         </a>
       </div>
 
       <div class="hero-stats">
-        <div class="stat"><strong>94%</strong><span>שיעור הצלחה</span></div>
+        <div class="stat"><strong>94%</strong><span>{$_('home.stats.successRate')}</span></div>
         <div class="stat-divider"></div>
-        <div class="stat"><strong>3.2</strong><span>סבבים בממוצע</span></div>
+        <div class="stat"><strong>3.2</strong><span>{$_('home.stats.avgRounds')}</span></div>
         <div class="stat-divider"></div>
-        <div class="stat"><strong>12k+</strong><span>הסכמות שנוצרו</span></div>
+        <div class="stat"><strong>12k+</strong><span>{$_('home.stats.agreements')}</span></div>
       </div>
     </div>
 
@@ -223,13 +197,13 @@
       <div class="consensus-card" use:reveal>
         <div class="card-header">
           <div class="topic-dot"></div>
-          <span>דיון פעיל</span>
-          <span class="round-badge">סבב 2/4</span>
+          <span>{$_('home.card.activeDiscussion')}</span>
+          <span class="round-badge">{$_('home.card.round')}</span>
         </div>
-        <h3>האם לאמץ מדיניות עבודה היברידית?</h3>
+        <h3>{$_('home.card.topic')}</h3>
         <div class="consensus-meter">
           <div class="meter-label">
-            <span>מד הסכמה</span>
+            <span>{$_('home.card.meter')}</span>
             <strong>67%</strong>
           </div>
           <div class="meter-track">
@@ -237,12 +211,12 @@
           </div>
         </div>
         <div class="positions-preview">
-          {#each ['3 ימים מהמשרד', '2 ימים מהבית', 'גמישות מלאה'] as pos, i}
+          {#each [$_('home.card.pos1'), $_('home.card.pos2'), $_('home.card.pos3')] as pos, i}
             <div class="pos-chip" style="--delay: {i * 0.1}s">{pos}</div>
           {/each}
         </div>
         <div class="card-footer">
-          <span>🤖 AI ממליץ: ניתן להגיע להסכמה על מודל גמיש</span>
+          <span>{$_('home.card.aiNote')}</span>
         </div>
       </div>
     </div>
@@ -252,9 +226,9 @@
   <section class="features" id="features">
     <div class="section-inner">
       <div class="section-header" use:reveal>
-        <span class="section-tag">יתרונות</span>
-        <h2>מדוע Consensus עובד</h2>
-        <p>שש סיבות שגורמות לדיונים להגיע לתוצאה</p>
+        <span class="section-tag">{$_('home.features.tag')}</span>
+        <h2>{$_('home.features.title')}</h2>
+        <p>{$_('home.features.subtitle')}</p>
       </div>
 
       <div class="features-grid">
@@ -274,9 +248,9 @@
   <section class="how-it-works" id="how-it-works">
     <div class="section-inner">
       <div class="section-header" use:reveal>
-        <span class="section-tag">תהליך</span>
-        <h2>ארבעה שלבים להסכמה</h2>
-        <p>תהליך פשוט שמוביל לתוצאות אמיתיות</p>
+        <span class="section-tag">{$_('home.steps.tag')}</span>
+        <h2>{$_('home.steps.title')}</h2>
+        <p>{$_('home.steps.subtitle')}</p>
       </div>
 
       <div class="steps">
@@ -302,34 +276,30 @@
       <div class="demo-wrapper" use:reveal>
         <div class="demo-label">
           <span class="live-dot"></span>
-          דיון חי — לצפייה בלבד
+          {$_('home.demo.label')}
         </div>
         <div class="demo-frame">
           <div class="demo-header">
             <div class="demo-dots">
               <span></span><span></span><span></span>
             </div>
-            <span class="demo-url">consensus.app/negotiation/demo</span>
+            <span class="demo-url">{$_('home.demo.url')}</span>
           </div>
           <div class="demo-content">
             <div class="demo-topic">
-              <h3>האם העיר צריכה להשקיע בתחבורה ציבורית או כבישים?</h3>
+              <h3>{$_('home.demo.topic')}</h3>
               <div class="demo-meta">
-                <span>👥 24 משתתפים</span>
-                <span>🔄 סבב 3 מתוך 5</span>
-                <span>✅ הסכמה: 71%</span>
+                <span>{$_('home.demo.participants')}</span>
+                <span>{$_('home.demo.round')}</span>
+                <span>{$_('home.demo.consensus')}</span>
               </div>
             </div>
             <div class="demo-positions">
-              {#each [
-                { text: 'השקעה מלאה בתחבורה ציבורית', score: 38, support: 9 },
-                { text: 'פיתוח מאוזן של שניהם', score: 72, support: 11 },
-                { text: 'עדיפות לפיתוח כבישים ראשיים', score: 45, support: 4 },
-              ] as pos}
+              {#each demoPositions as pos}
                 <div class="demo-pos">
                   <div class="demo-pos-header">
                     <span>{pos.text}</span>
-                    <span class="pos-support">{pos.support} תומכים</span>
+                    <span class="pos-support">{pos.support} {$_('home.demo.posSupport')}</span>
                   </div>
                   <div class="demo-bar">
                     <div class="demo-bar-fill" style="width: {pos.score}%"></div>
@@ -340,7 +310,7 @@
             </div>
             <div class="demo-ai-note">
               <span class="ai-icon">🤖</span>
-              <p>AI מזהה: עמדה 2 מייצגת נקודת גישור בין שתי הגישות. ניתן לנסח הסכמה על <strong>"השקעה ראשונה בתחבורה ציבורית לצירים עיקריים, תוך שיפור כבישים קיימים"</strong></p>
+              <p>{$_('home.demo.aiNote')} <strong>{$_('home.demo.aiHighlight')}</strong></p>
             </div>
           </div>
         </div>
@@ -352,8 +322,8 @@
   <section class="testimonials">
     <div class="section-inner">
       <div class="section-header" use:reveal>
-        <span class="section-tag">עדויות</span>
-        <h2>מה אומרים המשתמשים</h2>
+        <span class="section-tag">{$_('home.testimonials.tag')}</span>
+        <h2>{$_('home.testimonials.title')}</h2>
       </div>
 
       <div class="testimonials-carousel">
@@ -372,12 +342,12 @@
         {/each}
 
         <div class="carousel-dots">
-          {#each testimonials as _, i}
+          {#each testimonials as _t, i}
             <button
               class="dot"
               class:active={i === currentTestimonial}
               onclick={() => currentTestimonial = i}
-              aria-label={`עדות ${i + 1}`}
+              aria-label={$_('home.testimonials.ariaLabel', { values: { n: i + 1 } })}
             ></button>
           {/each}
         </div>
@@ -393,15 +363,15 @@
     <div class="section-inner">
       <div class="cta-content" use:reveal>
         <div class="cta-counter">
-          <span class="counter-num">{activeDiscussionsCount.toLocaleString('he')}</span>
-          <span class="counter-label">דיונים פעילים כרגע</span>
+          <span class="counter-num">{activeDiscussionsCount.toLocaleString(countLocale)}</span>
+          <span class="counter-label">{$_('home.cta.activeNow')}</span>
         </div>
-        <h2>מוכן להגיע להסכמה?</h2>
-        <p>הצטרף לאלפי אנשים שמגלים שניתן למצוא נקודת ביניים בכל מחלוקת</p>
+        <h2>{$_('home.cta.ready')}</h2>
+        <p>{$_('home.cta.subtitle')}</p>
         <div class="cta-actions">
-          <a href="https://www.1lev1.com/signup" class="btn-primary large">הצטרף עכשיו — בחינם</a>
+          <a href="https://www.1lev1.com/signup" class="btn-primary large">{$_('home.cta.join')}</a>
           <a href="/negotiation/local" class="btn-ghost large">
-            <span>🗺️</span> ראה דיונים בסביבתך
+            {$_('home.cta.nearby')}
           </a>
         </div>
       </div>
@@ -416,7 +386,7 @@
           <span class="logo-icon">⚖</span>
           <span class="logo-text">Consensus</span>
         </a>
-        <p>פלטפורמת AI ליישוב מחלוקות בצורה מובנית ואינטליגנטית</p>
+        <p>{$_('home.footer.description')}</p>
         <div class="social-links">
           <a href="#" aria-label="Twitter">𝕏</a>
           <a href="#" aria-label="LinkedIn">in</a>
@@ -426,28 +396,27 @@
 
       <div class="footer-links">
         <div class="footer-col">
-          <h4>מוצר</h4>
-          <a href="/faq">שאלות נפוצות</a>
-          <a href="/negotiation/local">מפת דיונים</a>
-          <a href="/about">אודות</a>
-          <a href="/contact">צור קשר</a>
+          <h4>{$_('home.footer.product')}</h4>
+          <a href="/faq">{$_('home.footer.faq')}</a>
+          <a href="/negotiation/local">{$_('home.footer.map')}</a>
+          <a href="/about">{$_('home.footer.about')}</a>
+          <a href="/contact">{$_('home.footer.contact')}</a>
         </div>
         <div class="footer-col">
-          <h4>משפטי</h4>
-          <a href="/privacy">מדיניות פרטיות</a>
-          <a href="/terms">תנאי שימוש</a>
+          <h4>{$_('home.footer.legal')}</h4>
+          <a href="/privacy">{$_('home.footer.privacy')}</a>
+          <a href="/terms">{$_('home.footer.terms')}</a>
         </div>
         <div class="footer-col">
-          <h4>שפות</h4>
-          <a href="?lang=he">עברית</a>
-          <a href="?lang=ar">العربية</a>
-          <a href="?lang=en">English</a>
+          <h4>{$_('home.footer.languages')}</h4>
+          <a href="?lang=he">{$_('lang.he')}</a>
+          <a href="?lang=ar">{$_('lang.ar')}</a>
+          <a href="?lang=en">{$_('lang.en')}</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 Consensus Platform · גרסה 1.1</span>
-      <span>נוצר אוטומטית · 5.3.2026</span>
+      <span>{$_('home.footer.rights')}</span>
     </div>
   </footer>
 </main>
@@ -779,7 +748,6 @@
 
   .stat span {
     font-size: 0.8rem;
-    color: #6060808;
     color: #60608a;
     font-family: 'Sora', sans-serif;
   }
@@ -835,7 +803,7 @@
   }
 
   .round-badge {
-    margin-right: auto;
+    margin-inline-start: auto;
     background: #7c3aed22;
     color: #c4b5fd;
     padding: 0.2rem 0.7rem;
@@ -991,8 +959,8 @@
     overflow: hidden;
     opacity: 0;
     transform: translateY(30px);
-    transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--i) * 0.1s), 
-                transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--i) * 0.1s), 
+    transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--i) * 0.1s),
+                transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--i) * 0.1s),
                 border-color 0.3s, box-shadow 0.3s;
     z-index: 2;
   }
@@ -1175,7 +1143,6 @@
   .demo-url {
     font-family: 'Sora', sans-serif;
     font-size: 0.8rem;
-    color: #5050808;
     color: #505080;
   }
 
@@ -1196,7 +1163,6 @@
     gap: 1.5rem;
     font-family: 'Sora', sans-serif;
     font-size: 0.85rem;
-    color: #6060808;
     color: #60608a;
   }
 
@@ -1225,12 +1191,6 @@
   }
 
   .demo-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-  }
-
-  .demo-bar {
     height: 6px;
     background: #ffffff0a;
     border-radius: 100px;
@@ -1252,7 +1212,7 @@
     font-family: 'Sora', sans-serif;
     font-size: 0.78rem;
     color: #7070a0;
-    margin-right: 0.6rem;
+    margin-inline-start: 0.6rem;
     white-space: nowrap;
   }
 
@@ -1520,7 +1480,6 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #5050808;
     color: #505080;
     margin-bottom: 1rem;
   }
@@ -1547,7 +1506,7 @@
     padding: 1.5rem 2rem 0;
     border-top: 1px solid #ffffff08;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     font-family: 'Sora', sans-serif;
     font-size: 0.82rem;
     color: #4a4a6a;

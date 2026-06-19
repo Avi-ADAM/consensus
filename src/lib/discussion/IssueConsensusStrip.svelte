@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { issueConsensus, type Clause, type Issue } from './scale';
+	import { _ } from 'svelte-i18n';
 
 	interface Props {
 		issues: Issue[];
@@ -20,7 +21,7 @@
 
 {#if rows.length > 0}
 	<div class="rounded-xl border border-white/10 bg-white/5 p-3">
-		<p class="mb-2 text-xs text-white/50">קונצנזוס לפי היבט</p>
+		<p class="mb-2 text-xs text-white/50">{$_('issueHealth.title')}</p>
 		<div class="flex flex-wrap gap-2">
 			{#each rows as row (row.issueId)}
 				<span

@@ -6,6 +6,7 @@
 	import { createDiscussion, type OpinionInput } from '$lib/discussion/api';
 	import { decomposeAndPersist } from '$lib/discussion/decompose';
 	import { t } from '$lib/i18n';
+	import { _ } from 'svelte-i18n';
 
 	let { data } = $props();
 
@@ -99,10 +100,9 @@
 	}
 </script>
 
-<svelte:head><title>{t('new.title')}</title></svelte:head>
+<svelte:head><title>{$_('new.title')}</title></svelte:head>
 
 <main
-	dir="rtl"
 	class="flex min-h-screen flex-col items-center bg-linear-to-br from-[#09090f] via-[#120b2e] to-[#0d0d1a] px-4 py-10 text-white sm:py-16"
 >
 	<div class="w-full max-w-xl">
@@ -110,7 +110,7 @@
 			<span
 				class="inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-200"
 			>
-				✦ דיון חדש
+				{$_('new.badge')}
 			</span>
 			<h1 class="mt-3 text-3xl font-bold tracking-tight">{t('new.title')}</h1>
 		</header>

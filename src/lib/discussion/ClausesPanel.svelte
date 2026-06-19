@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import type { Issue, Clause } from './scale';
   import { hueStyle } from './design';
+  import { _ } from 'svelte-i18n';
 
   // ── Scale helpers (inlined) ───────────────────────────────────────────────
   function missingIssues(positionClauses: Clause[], issues: Issue[]): Issue[] {
@@ -127,30 +128,30 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="modal-scrim" onmousedown={handleScrimClick}>
-  <div class="modal" dir="rtl" role="dialog" aria-modal="true" aria-label="סעיפי הדעה">
+  <div class="modal" role="dialog" aria-modal="true" aria-label={$_('clauses.ariaLabel')}>
     <!-- Header -->
     <header class="modal-head">
       <div class="modal-head-l">
         <span class="modal-eyebrow">
           <i class="modal-dot" style="background:{hue.base}"></i>
-          סעיפי הדעה
+          {$_('clauses.title')}
         </span>
         <h2 class="modal-title">{title}</h2>
       </div>
-      <button type="button" class="modal-x" onclick={onclose} aria-label="סגירה">✕</button>
+      <button type="button" class="modal-x" onclick={onclose} aria-label={$_('clauses.close')}>✕</button>
     </header>
 
     <!-- Drift hint -->
     {#if clauses.length > 0 && typeof selfPlacement === 'number'}
       <div class="cp-derive">
         <div class="cp-derive-row">
-          <span>המיקום הנגזר מהסעיפים</span>
+          <span>{$_('clauses.derivedLocation')}</span>
           <strong>{Math.round(derivedLocation)}</strong>
-          <span class="cp-derive-vs">מול סימון עצמי</span>
+          <span class="cp-derive-vs">{$_('clauses.vsManual')}</span>
           <strong>{Math.round(selfPlacement)}</strong>
         </div>
         {#if Math.abs(drift) >= 5 && pulling}
-          <p class="cp-derive-pull">הסעיף שהכי מושך אתכם לכיוון: "{pulling.body}".</p>
+          <p class="cp-derive-pull">{$_('clauses.pullingClause', { values: { body: pulling.body } })}</p>
         {/if}
       </div>
     {/if}
@@ -174,7 +175,7 @@
                         bind:value={editBody}
                       ></textarea>
                       <label class="cp-range">
-                        עמדה על הציר — {editStance}
+                        {$_('clauses.stanceLabel', { values: { value: editStance } })}
                         <input
                           type="range"
                           min="0"
@@ -183,20 +184,20 @@
                         />
                       </label>
                       <div class="cp-edit-actions">
-                        <button type="button" class="btn-ghost-sm" onclick={cancelEdit}>ביטול</button>
+                        <button type="button" class="btn-ghost-sm" onclick={cancelEdit}>{$_('clauses.cancel')}</button>
                         <button
                           type="button"
                           class="btn-violet-sm"
                           disabled={!editBody.trim()}
                           onclick={saveEdit}
-                        >שמירה</button>
+                        >{$_('clauses.save')}</button>
                       </div>
                     </div>
                   {:else}
                     <div class="cp-item-top">
                       <p class="cp-body">{c.body}</p>
                       {#if c.confirmedByAuthor}
-                        <span class="cp-confirmed">✓ מאושר</span>
+                        <span class="cp-confirmed">{$_('clauses.confirmed')}</span>
                       {/if}
                     </div>
                     <span
@@ -210,7 +211,7 @@
                           class="cp-link"
                           disabled={savingClauseId === c.id}
                           onclick={() => startEdit(c)}
-                        >עריכה</button>
+                        >{$_('clauses.edit')}</button>
                         {#if !c.confirmedByAuthor}
                           <button
                             type="button"
@@ -218,7 +219,7 @@
                             disabled={savingClauseId === c.id}
                             onclick={() => onconfirm?.(c.id)}
                           >
-                            {savingClauseId === c.id ? 'שומר…' : 'אישור הסעיף'}
+                            {savingClauseId === c.id ? $_('clauses.saving') : $_('clauses.confirm')}
                           </button>
                         {/if}
                       </div>
@@ -234,7 +235,7 @@
       <!-- Unclassified clauses -->
       {#if unclassified.length > 0}
         <section class="cp-sec">
-          <h3 class="cp-sec-title cp-muted">ללא שיוך להיבט</h3>
+          <h3 class="cp-sec-title cp-muted">{$_('clauses.unclassified')}</h3>
           <ul class="cp-list">
             {#each unclassified as c (c.id)}
               <li class="cp-item">
@@ -248,8 +249,8 @@
       <!-- Gaps -->
       {#if gaps.length > 0}
         <section class="cp-gaps">
-          <h3 class="cp-gaps-title">סעיפים חסרים</h3>
-          <p class="cp-gaps-sub">היבטים שדעות אחרות התייחסו אליהם — הדעה הזו עדיין לא.</p>
+          <h3 class="cp-gaps-title">{$_('clauses.gaps')}</h3>
+          <p class="cp-gaps-sub">{$_('clauses.gapsSub')}</p>
           <ul class="cp-gaps-list">
             {#each gaps as issue (issue.id)}
               <li class="cp-gap">
@@ -261,14 +262,14 @@
                         type="button"
                         class="btn-ghost-sm"
                         onclick={() => startManual(issue.id)}
-                      >הוספה ידנית</button>
+                      >{$_('clauses.addManual')}</button>
                       <button
                         type="button"
                         class="btn-amber-sm"
                         disabled={fillingIssueId === issue.id}
                         onclick={() => onfill?.(issue)}
                       >
-                        {fillingIssueId === issue.id ? 'ממלא…' : 'השלם עם AI'}
+                        {fillingIssueId === issue.id ? $_('clauses.filling') : $_('clauses.fillAI')}
                       </button>
                     </div>
                   {/if}
@@ -277,12 +278,12 @@
                   <div class="cp-edit cp-edit-in">
                     <textarea
                       rows="2"
-                      placeholder="נסחו את הסעיף…"
+                      placeholder={$_('clauses.clausePlaceholder')}
                       class="cp-ta"
                       bind:value={manualBody}
                     ></textarea>
                     <label class="cp-range">
-                      עמדה על הציר — {manualStance}
+                      {$_('clauses.stanceLabel', { values: { value: manualStance } })}
                       <input
                         type="range"
                         min="0"
@@ -291,13 +292,13 @@
                       />
                     </label>
                     <div class="cp-edit-actions">
-                      <button type="button" class="btn-ghost-sm" onclick={cancelManual}>ביטול</button>
+                      <button type="button" class="btn-ghost-sm" onclick={cancelManual}>{$_('clauses.cancel')}</button>
                       <button
                         type="button"
                         class="btn-violet-sm"
                         disabled={!manualBody.trim()}
                         onclick={() => saveManual(issue)}
-                      >הוספה</button>
+                      >{$_('clauses.add')}</button>
                     </div>
                   </div>
                 {/if}
@@ -308,7 +309,7 @@
       {/if}
 
       {#if clauses.length === 0 && gaps.length === 0}
-        <p class="cp-muted">אין עדיין סעיפים לדעה זו.</p>
+        <p class="cp-muted">{$_('clauses.empty')}</p>
       {/if}
     </div>
   </div>

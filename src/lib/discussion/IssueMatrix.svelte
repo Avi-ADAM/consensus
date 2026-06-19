@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Issue, Clause, Opinion } from './scale';
   import { hueStyle } from './design';
+  import { _ } from 'svelte-i18n';
 
   interface Props {
     issues: Issue[];
@@ -27,13 +28,13 @@
 </script>
 
 {#if !sortedIssues.length || !cols.length}
-  <p class="mx-empty" dir="rtl">אין עדיין סעיפים להשוואה.</p>
+  <p class="mx-empty">{$_('issueMatrix.empty')}</p>
 {:else}
-  <div class="mx-wrap" dir="rtl">
+  <div class="mx-wrap">
     <table class="mx">
       <thead>
         <tr>
-          <th class="mx-corner">היבט</th>
+          <th class="mx-corner">{$_('issueMatrix.aspect')}</th>
           {#each cols as o (o.id)}
             {@const hue = hueStyle(o.color)}
             <th
@@ -63,7 +64,7 @@
                   <p class="mx-body">{c.body}</p>
                   <span class="mx-bar"><i style="width:{c.stanceValue}%;background:{hue.base}"></i></span>
                 {:else}
-                  <span class="mx-missing">חסר</span>
+                  <span class="mx-missing">{$_('issueMatrix.missing')}</span>
                 {/if}
               </td>
             {/each}
