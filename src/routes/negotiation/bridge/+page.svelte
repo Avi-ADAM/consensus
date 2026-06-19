@@ -9,6 +9,7 @@
 	} from '$lib/discussion/api';
 	import { buildBridgeSeed, fieldChanged, formatFieldValue } from '$lib/discussion/bridge';
 	import { t } from '$lib/i18n';
+	import { _ } from 'svelte-i18n';
 
 	let { data } = $props();
 
@@ -100,10 +101,9 @@
 	}
 </script>
 
-<svelte:head><title>{t('bridge.title')}</title></svelte:head>
+<svelte:head><title>{$_('bridge.title')}</title></svelte:head>
 
 <main
-	dir="rtl"
 	class="flex min-h-screen flex-col items-center bg-linear-to-br from-[#09090f] via-[#120b2e] to-[#0d0d1a] px-4 py-10 text-white sm:py-16"
 >
 	<div class="w-full max-w-xl">
@@ -111,13 +111,13 @@
 			<span
 				class="inline-flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-200"
 			>
-				🤝 {t('bridge.title')}
+				🤝 {$_('bridge.title')}
 			</span>
 			{#if payload}
 				<h1 class="mt-3 text-3xl font-bold tracking-tight">{payload.title}</h1>
 				{#if payload.projectName}
 					<p class="mt-1 text-sm text-white/50">
-						{t('bridge.sourceProject', { name: payload.projectName })}
+						{$_('bridge.sourceProject', { values: { name: payload.projectName } })}
 					</p>
 				{/if}
 			{/if}
@@ -127,28 +127,28 @@
 			<div
 				class="mt-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-5 text-center text-sm text-amber-100"
 			>
-				{t('bridge.invalid')}
+				{$_('bridge.invalid')}
 			</div>
 		{:else if !canCreate}
 			<div
 				class="mt-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-5 text-center text-sm text-amber-100"
 			>
-				{t('bridge.locked')}
-				<a class="underline" href="https://www.1lev1.com/login">{t('bridge.lockedCta')}</a>
+				{$_('bridge.locked')}
+				<a class="underline" href="https://www.1lev1.com/login">{$_('bridge.lockedCta')}</a>
 			</div>
 		{:else}
-			<p class="mx-auto mt-3 max-w-md text-center text-sm text-white/60">{t('bridge.intro')}</p>
+			<p class="mx-auto mt-3 max-w-md text-center text-sm text-white/60">{$_('bridge.intro')}</p>
 
 			<div
 				class="mt-7 rounded-3xl border border-white/10 bg-[#0d0d18] p-5 shadow-2xl shadow-black/40 sm:p-7"
 			>
-				<h2 class="text-base font-semibold text-violet-100">{t('bridge.fieldsTitle')}</h2>
+				<h2 class="text-base font-semibold text-violet-100">{$_('bridge.fieldsTitle')}</h2>
 				<table class="mt-3 w-full text-sm">
 					<thead>
 						<tr class="text-right text-xs text-white/40">
 							<th class="pb-2 font-normal"></th>
-							<th class="pb-2 font-normal">{t('bridge.original')}</th>
-							<th class="pb-2 font-normal">{t('bridge.proposed')}</th>
+							<th class="pb-2 font-normal">{$_('bridge.original')}</th>
+							<th class="pb-2 font-normal">{$_('bridge.proposed')}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -161,7 +161,7 @@
 										<span
 											class="ms-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-200"
 										>
-											{t('bridge.agreedBadge')}
+											{$_('bridge.agreedBadge')}
 										</span>
 									{/if}
 								</td>

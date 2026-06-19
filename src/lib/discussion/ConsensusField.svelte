@@ -3,6 +3,7 @@
   import { cubicOut } from 'svelte/easing';
   import type { Opinion, Clause, InsertMode } from './scale';
   import { hueStyle } from './design';
+  import { _ } from 'svelte-i18n';
 
   // ── Scale math (inlined, mirrors scale.ts) ──────────────────────────────────
   function sortByLocation(ops: Opinion[]) {
@@ -137,7 +138,7 @@
   }
 </script>
 
-<div class="cf-wrap" dir="rtl">
+<div class="cf-wrap">
   <div class="cf-grid">
     <!-- ── Field ── -->
     <div class="cf-field" bind:this={containerEl}>
@@ -196,12 +197,12 @@
         style="box-shadow: 0 0 {coreGlow}px rgba(124,58,237,{coreShadowAlpha.toFixed(2)})"
       >
         <div class="cf-core-num">{Math.round($scoreT)}<span>%</span></div>
-        <div class="cf-core-label">הסכמה</div>
+        <div class="cf-core-label">{$_('consensusField.consensus')}</div>
       </div>
 
       <!-- Center pill -->
       <div class="cf-centerpill" style={pinStyle(tickPoint, 0)}>
-        <span class="cf-livedot"></span>מרכז הסכמה
+        <span class="cf-livedot"></span>{$_('consensusField.consensusCenter')}
       </div>
 
       <!-- Opinion nodes -->
@@ -239,15 +240,15 @@
       {/each}
 
       <!-- Pole labels -->
-      <div class="cf-pole cf-pole-r">קצה אחד של המחלוקת</div>
-      <div class="cf-pole cf-pole-l">הקצה הנגדי</div>
+      <div class="cf-pole cf-pole-r">{$_('consensusField.poleRight')}</div>
+      <div class="cf-pole cf-pole-l">{$_('consensusField.poleLeft')}</div>
     </div>
 
     <!-- ── Inspector ── -->
     <aside class="cf-insp {selectedOpinion ? '' : 'cf-insp-empty'}">
       {#if selectedOpinion && selectedHue}
         <div class="cf-insp-eyebrow">
-          {selectedOpinion.kind === 'proposed_solution' ? 'נוסחת אמצע שאומצה' : 'דעה נבחרת'}
+          {selectedOpinion.kind === 'proposed_solution' ? $_('consensusField.proposedSolution') : $_('consensusField.selectedOpinion')}
         </div>
         <div class="cf-insp-head">
           <span
@@ -262,7 +263,7 @@
 
         <div class="cf-insp-loc">
           <div class="cf-insp-loc-top">
-            <span>מיקום נגזר מהסעיפים</span>
+            <span>{$_('consensusField.derivedLocation')}</span>
             <strong>{selectedLoc}</strong>
           </div>
           <div class="cf-insp-track">
@@ -273,7 +274,7 @@
             <div
               class="cf-insp-track-self"
               style="inset-inline-start:{(selectedOpinion.selfPlacement ?? selectedLoc)}%"
-              title="היכן המחבר/ת מיקמו את עצמם"
+              title={$_('consensusField.selfPlacementTitle')}
             ></div>
           </div>
         </div>
@@ -281,7 +282,7 @@
         <div class="cf-insp-votes">
           <div>
             <strong>{selectedOpinion.votes ?? 0}</strong>
-            <span>תומכים</span>
+            <span>{$_('consensusField.supporters')}</span>
           </div>
           {#if canVote && onsupport}
             <button
@@ -290,7 +291,7 @@
               style="border-color:{selectedHue.border}"
               onclick={() => onsupport!(selectedOpinion!.id)}
             >
-              תמיכה <span>＋</span>
+              {$_('consensusField.supportBtn')}
             </button>
           {/if}
         </div>
@@ -302,7 +303,7 @@
               class="btn-soft btn-soft-wide"
               onclick={() => onclauses!(selectedOpinion!.id)}
             >
-              פתחו את הסעיפים
+              {$_('consensusField.openClauses')}
               <em>{clauseCountFor(selectedOpinion.id)}</em>
             </button>
           {/if}
@@ -312,39 +313,41 @@
               class="btn-soft"
               onclick={() => onopen!(selectedOpinion!.id)}
             >
-              יתרונות/חסרונות
+              {$_('consensusField.openArguments')}
             </button>
           {/if}
         </div>
       {:else}
-        <div class="cf-insp-eyebrow">מרכז הבקרה</div>
-        <h4 class="cf-insp-guidetitle">בחרו דעה בשדה כדי לחקור אותה</h4>
+        <div class="cf-insp-eyebrow">{$_('consensusField.controlCenter')}</div>
+        <h4 class="cf-insp-guidetitle">{$_('consensusField.guideTitle')}</h4>
         <ol class="cf-insp-steps">
           <li>
             <b>1</b>
-            <span>תמכו בדעה שקרובה לליבכם — השדה יזוז סביב ההסכמה</span>
+            <span>{$_('consensusField.step1')}</span>
           </li>
           <li>
             <b>2</b>
-            <span>פתחו את <em>הסעיפים</em> כדי לראות איך כל דעה מתפרקת להיבטים</span>
+            <!-- eslint-disable svelte/no-at-html-tags -->
+            <span>{@html $_('consensusField.step2')}</span>
           </li>
           <li>
             <b>3</b>
-            <span>בקשו <em>נוסחת אמצע</em> — ה‑AI מציע פתרון שכולם יכולים לחיות איתו</span>
+            <span>{@html $_('consensusField.step3')}</span>
+            <!-- eslint-enable svelte/no-at-html-tags -->
           </li>
         </ol>
         <div class="cf-insp-summary">
           <div>
             <strong>{Math.round($scoreT)}%</strong>
-            <span>הסכמה כללית</span>
+            <span>{$_('consensusField.overallConsensus')}</span>
           </div>
           <div>
             <strong>{opinions.length}</strong>
-            <span>דעות בדיון</span>
+            <span>{$_('consensusField.opinionsCount')}</span>
           </div>
           <div>
             <strong>{totalSupporters}</strong>
-            <span>תומכים</span>
+            <span>{$_('consensusField.supporters')}</span>
           </div>
         </div>
       {/if}
@@ -689,7 +692,6 @@
     gap: 0.35rem;
     transition: background 0.2s, transform 0.15s;
   }
-  .btn-support span { font-size: 1.05rem; line-height: 1; }
   .btn-support:hover { background: rgba(16, 185, 129, 0.26); transform: translateY(-1px); }
   .btn-support:active { transform: translateY(0) scale(0.97); }
 
@@ -766,7 +768,7 @@
     align-items: center;
     justify-content: center;
   }
-  .cf-insp-steps em {
+  :global(.cf-insp-steps em) {
     font-style: normal;
     color: #c4b5fd;
     font-weight: 500;

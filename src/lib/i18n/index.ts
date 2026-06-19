@@ -1,28 +1,44 @@
-import { he, type MessageKey } from './locales/he';
+import { browser } from '$app/environment';
+import { init, register, _, locale, waitLocale } from 'svelte-i18n';
+import { get } from 'svelte/store';
 
-export type { MessageKey };
-
-const locales = { he } as const;
-export type Locale = keyof typeof locales;
-
+export type Locale = 'he' | 'en' | 'ar';
+export const RTL_LOCALES: Locale[] = ['he', 'ar'];
+export const SUPPORTED_LOCALES: Locale[] = ['he', 'en', 'ar'];
 export const DEFAULT_LOCALE: Locale = 'he';
 
-type Params = Record<string, string | number>;
+register('he', () => import('./locales/he.json'));
+register('en', () => import('./locales/en.json'));
+register('ar', () => import('./locales/ar.json'));
 
-function interpolate(template: string, params?: Params): string {
-	if (!params) return template;
-	return template.replace(/\{(\w+)\}/g, (match, key) =>
-		key in params ? String(params[key]) : match
-	);
+export function setupI18n(initialLocale: string = DEFAULT_LOCALE) {
+	const safeLocale = SUPPORTED_LOCALES.includes(initialLocale as Locale)
+		? initialLocale
+		: DEFAULT_LOCALE;
+
+	init({
+		fallbackLocale: DEFAULT_LOCALE,
+		initialLocale: browser
+			? (localStorage.getItem('locale') ?? safeLocale)
+			: safeLocale
+	});
 }
 
-/**
- * Translate a message key for the given locale, with `{token}` interpolation.
- * Falls back to the default locale, then to the key itself, so a missing
- * translation degrades visibly rather than throwing.
- */
-export function t(key: MessageKey, params?: Params, locale: Locale = DEFAULT_LOCALE): string {
-	const catalog = locales[locale] ?? locales[DEFAULT_LOCALE];
-	const template = catalog[key] ?? locales[DEFAULT_LOCALE][key] ?? key;
-	return interpolate(template, params);
+export function setLocale(newLocale: Locale) {
+	locale.set(newLocale);
+	if (browser) localStorage.setItem('locale', newLocale);
+	// Persist to cookie for SSR on next request
+	if (browser) document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
 }
+
+export function isRTL(loc?: string): boolean {
+	const l = (loc ?? get(locale)) as Locale;
+	return RTL_LOCALES.includes(l);
+}
+
+/** Synchronous translate — for use in event handlers & non-reactive script code. */
+export function t(key: string, values?: Record<string, string | number>): string {
+	return get(_)(key, { values });
+}
+
+export { locale, waitLocale, _ };

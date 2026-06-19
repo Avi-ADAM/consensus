@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Issue, Clause } from './scale';
+  import { _ } from 'svelte-i18n';
 
   interface Props {
     issues: Issue[];
@@ -41,13 +42,13 @@
 </script>
 
 {#if rows.length > 0}
-  <div class="ih" dir="rtl">
+  <div class="ih">
     <div class="ih-top">
-      <span class="ih-title">קונצנזוס לפי היבט</span>
+      <span class="ih-title">{$_('issueHealth.title')}</span>
       <span class="ih-legend">
-        <i class="d-em"></i>מוסכם
-        <i class="d-am"></i>חלקי
-        <i class="d-ro"></i>שנוי במחלוקת
+        <i class="d-em"></i>{$_('issueHealth.agreed')}
+        <i class="d-am"></i>{$_('issueHealth.partial')}
+        <i class="d-ro"></i>{$_('issueHealth.disputed')}
       </span>
     </div>
     <div class="ih-row">

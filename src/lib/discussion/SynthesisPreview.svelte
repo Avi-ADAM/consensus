@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { SynthesisDraft } from './decompose';
+  import { _ } from 'svelte-i18n';
 
   interface Props {
     draft: SynthesisDraft;
@@ -33,17 +34,17 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="modal-scrim" onmousedown={handleScrimClick}>
-  <div class="modal modal-emerald" dir="rtl" role="dialog" aria-modal="true" aria-label="נוסחת אמצע מוצעת">
+  <div class="modal modal-emerald" role="dialog" aria-modal="true" aria-label={$_('synthesis.ariaLabel')}>
     <!-- Header -->
     <header class="modal-head">
       <div class="modal-head-l">
         <span class="modal-eyebrow sp-eyebrow">
           <i class="modal-dot sp-dot"></i>
-          נוסחת אמצע מוצעת
+          {$_('synthesis.title')}
         </span>
         <h2 class="modal-title">{draft.heading}</h2>
       </div>
-      <button type="button" class="modal-x" onclick={onclose} aria-label="סגירה">✕</button>
+      <button type="button" class="modal-x" onclick={onclose} aria-label={$_('synthesis.close')}>✕</button>
     </header>
 
     <!-- Description -->
@@ -54,14 +55,14 @@
     <!-- Rationale box -->
     {#if draft.rationale}
       <div class="sp-why">
-        <span class="sp-why-tag">למה זה עובד לשני הצדדים</span>
+        <span class="sp-why-tag">{$_('synthesis.whyWorks')}</span>
         <p>{draft.rationale}</p>
       </div>
     {/if}
 
     <!-- Clause list -->
     <div class="modal-body">
-      <p class="sp-list-title">סעיפי הנוסחה לפי היבט</p>
+      <p class="sp-list-title">{$_('synthesis.clausesByAspect')}</p>
       {#each draft.clauses as c, i (i)}
         <div class="sp-clause">
           {#if c.issueTitle}
@@ -72,20 +73,20 @@
         </div>
       {/each}
       {#if draft.clauses.length === 0}
-        <p class="cp-muted">לא הופקו סעיפים.</p>
+        <p class="cp-muted">{$_('synthesis.noClauses')}</p>
       {/if}
     </div>
 
     <!-- Footer -->
     <footer class="modal-foot">
-      <button type="button" class="btn-ghost-sm" onclick={onclose}>ביטול</button>
+      <button type="button" class="btn-ghost-sm" onclick={onclose}>{$_('synthesis.cancel')}</button>
       <button
         type="button"
         class="btn-emerald"
         disabled={draft.clauses.length === 0 || saving}
         onclick={onconfirm}
       >
-        {saving ? 'מוסיף…' : 'הוספה לדיון כדעה'}
+        {saving ? $_('synthesis.adding') : $_('synthesis.addToDiscussion')}
       </button>
     </footer>
   </div>

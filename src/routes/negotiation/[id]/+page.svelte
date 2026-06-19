@@ -42,6 +42,8 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { page } from '$app/state';
 	import { ShareButtons } from '@1lev1/svelte-share';
+	import { _ } from 'svelte-i18n';
+	import { t } from '$lib/i18n';
 
 	let { data } = $props();
 
@@ -221,10 +223,10 @@
 			if (draft) {
 				synthDraft = draft;
 			} else {
-				synthError = 'עוזר ה-AI אינו זמין כעת.';
+				synthError = t('discussion.synthErrorAI');
 			}
 		} catch {
-			synthError = 'שגיאה בהפקת נוסחת האמצע.';
+			synthError = t('discussion.synthError');
 		} finally {
 			synthBusy = false;
 		}
@@ -243,7 +245,7 @@
 			synthDraft = null;
 			await refresh();
 		} catch {
-			synthError = 'שמירת נוסחת האמצע נכשלה.';
+			synthError = t('discussion.synthSaveError');
 		} finally {
 			synthSaving = false;
 		}
@@ -344,7 +346,7 @@
 						.catch(() => {});
 				}
 			} catch {
-				submitError = 'שמירת הדעה נכשלה. נסו שוב.';
+				submitError = t('discussion.submitError');
 			}
 		} else {
 			localOpinions = [
@@ -451,26 +453,23 @@
 			});
 			const out = await res.json();
 			aiNote = out.available
-				? (out.data?.comment ?? out.data?.rationale ?? 'אין הערה.')
-				: 'עוזר ה-AI אינו זמין כעת.';
+				? (out.data?.comment ?? out.data?.rationale ?? t('discussion.aiNoComment'))
+				: t('discussion.synthErrorAI');
 		} catch {
-			aiNote = 'שגיאה בפנייה לעוזר ה-AI.';
+			aiNote = t('discussion.aiError');
 		} finally {
 			aiBusy = false;
 		}
 	}
 </script>
 
-<svelte:head><title>דיון: {topic}</title></svelte:head>
+<svelte:head><title>{$_('discussion.pageTitle', { values: { topic } })}</title></svelte:head>
 
-<main dir="rtl" class="min-h-screen bg-[#09090f] px-4 py-8 text-white">
+<main class="min-h-screen bg-[#09090f] px-4 py-8 text-white">
 	<div class="mx-auto max-w-3xl">
-		<p class="text-sm text-white/40">דיון #{data.id}</p>
+		<p class="text-sm text-white/40">{$_('discussion.discussionId', { values: { id: data.id } })}</p>
 		<h1 class="mt-1 text-2xl font-bold text-white">{topic}</h1>
-		<p class="mt-2 text-sm text-white/60">
-			שתי דעות-העוגן מגדירות את הקצוות. הוסיפו דעה ביניהן או קיצונית מעבר לקצה — לא חייב באמצע, אפשר
-			קרוב מאוד לדעה קיימת.
-		</p>
+		<p class="mt-2 text-sm text-white/60">{$_('discussion.introText')}</p>
 
 		{#if shareable && meta}
 			<div class="mt-3">
@@ -479,7 +478,7 @@
 					onclick={() => (showShare = !showShare)}
 					class="rounded-lg border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
 				>
-					🔗 שיתוף הדיון
+					{$_('discussion.shareDiscussion')}
 				</button>
 				{#if showShare}
 					<div class="mt-3">
@@ -498,7 +497,7 @@
 
 		{#if !live}
 			<div class="mt-3 rounded-lg border border-white/15 bg-white/5 p-3 text-sm text-white/50">
-				מצב הדגמה — השרת אינו מחובר, השינויים אינם נשמרים.
+				{$_('discussion.demoMode')}
 			</div>
 		{/if}
 
@@ -516,12 +515,12 @@
 			<div
 				class="mt-3 rounded-lg border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-100"
 			>
-				אתם משתתפים כחותמי אמנה. כדי לערוך בעתיד או מדפדפן אחר —
-				<a class="underline" href="https://www.1lev1.com/signup">צרו חשבון</a>.
+				{$_('discussion.charterNote')}
+				<a class="underline" href="https://www.1lev1.com/signup">{$_('discussion.createAccount')}</a>.
 			</div>
 		{:else if data.user.type === 'guest'}
 			<div class="mt-3 rounded-lg border border-white/15 bg-white/5 p-3 text-sm text-white/60">
-				צפייה בלבד. כדי להשתתף, התחברו או הסכימו לאמנה.
+				{$_('discussion.viewOnly')}
 			</div>
 		{/if}
 	</div>
@@ -538,7 +537,7 @@
 							? 'bg-white/15 text-white shadow-sm'
 							: 'text-white/55 hover:text-white/85'}"
 					>
-						ספקטרום
+						{$_('discussion.spectrum')}
 					</button>
 					<button
 						type="button"
@@ -547,7 +546,7 @@
 							? 'bg-white/15 text-white shadow-sm'
 							: 'text-white/55 hover:text-white/85'}"
 					>
-						מטריצת היבטים
+						{$_('discussion.matrix')}
 					</button>
 				</div>
 				{#if canSynthesize}
@@ -558,7 +557,7 @@
 							disabled={synthBusy}
 							class="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-500/20 disabled:opacity-50"
 						>
-							{synthBusy ? 'מפיק נוסחת אמצע…' : '✨ הצע נוסחת אמצע'}
+							{synthBusy ? $_('discussion.synthesizing') : $_('discussion.synthesize')}
 						</button>
 						{#if synthError}
 							<span class="text-xs text-rose-300">{synthError}</span>
@@ -590,29 +589,29 @@
 </main>
 
 {#if pending}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" dir="rtl">
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
 		<div
 			class="w-full max-w-md rounded-2xl border border-white/15 bg-[#15152a] p-6 text-white shadow-2xl"
 		>
 			<h2 class="text-lg font-bold">
 				{pending.mode === 'beyond_top'
-					? 'דעה קיצונית למעלה'
+					? $_('discussion.opinionMode.beyond_top')
 					: pending.mode === 'beyond_bottom'
-						? 'דעה קיצונית למטה'
-						: 'דעה ביניהן'}
+						? $_('discussion.opinionMode.beyond_bottom')
+						: $_('discussion.opinionMode.between')}
 			</h2>
 
 			<label class="mt-4 block text-sm text-white/70">
-				כותרת
+				{$_('discussion.form.title')}
 				<input
 					bind:value={heading}
 					class="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-white"
-					placeholder="נסחו את הדעה במשפט"
+					placeholder={$_('discussion.form.titlePlaceholder')}
 				/>
 			</label>
 
 			<label class="mt-3 block text-sm text-white/70">
-				הסבר (לא חובה)
+				{$_('discussion.form.descPlaceholder')}
 				<textarea
 					bind:value={description}
 					rows="2"
@@ -622,7 +621,7 @@
 
 			{#if pending.mode === 'between'}
 				<label class="mt-3 block text-sm text-white/70">
-					מיקום בין שתי הדעות — {fraction}%
+					{$_('discussion.form.placement', { values: { fraction } })}
 					<input type="range" min="5" max="95" bind:value={fraction} class="mt-1 w-full" />
 				</label>
 			{/if}
@@ -631,7 +630,7 @@
 				<p
 					class="mt-3 rounded-lg border border-violet-400/30 bg-violet-500/10 p-3 text-sm text-violet-100"
 				>
-					🤖 {aiNote}
+					{$_('discussion.form.aiNote')} {aiNote}
 				</p>
 			{/if}
 
@@ -648,7 +647,7 @@
 					disabled={aiBusy || !heading.trim()}
 					class="rounded-lg border border-violet-400/40 px-3 py-2 text-sm text-violet-100 hover:bg-violet-500/20 disabled:opacity-40"
 				>
-					{aiBusy ? 'בודק…' : 'שאלו את ה-AI'}
+					{aiBusy ? $_('discussion.form.aiCheck') : $_('discussion.form.askAI')}
 				</button>
 				<div class="flex gap-2">
 					<button
@@ -656,7 +655,7 @@
 						onclick={closeForm}
 						class="rounded-lg px-3 py-2 text-sm text-white/60"
 					>
-						ביטול
+						{$_('discussion.form.cancel')}
 					</button>
 					<button
 						type="button"
@@ -664,7 +663,7 @@
 						disabled={!heading.trim()}
 						class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
 					>
-						הוספה
+						{$_('discussion.form.add')}
 					</button>
 				</div>
 			</div>
