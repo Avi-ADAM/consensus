@@ -11,5 +11,7 @@ export const load: LayoutLoad = async ({ data }) => {
 		initialized = true;
 	}
 	await waitLocale();
-	return {};
+	// Re-expose the server layout data (user, locale): when both +layout.server.ts
+	// and +layout.ts exist, only what this universal load returns reaches the pages.
+	return { ...data };
 };

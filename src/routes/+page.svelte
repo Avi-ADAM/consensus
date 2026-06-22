@@ -39,12 +39,6 @@
 		}))
 	);
 
-	let demoPositions = $derived([
-		{ text: $_('home.demo.pos1'), score: 38, support: 9 },
-		{ text: $_('home.demo.pos2'), score: 72, support: 11 },
-		{ text: $_('home.demo.pos3'), score: 45, support: 4 }
-	]);
-
 	let countLocale = $derived($locale === 'he' ? 'he' : $locale === 'ar' ? 'ar' : 'en');
 
 	// Reveal Action for Svelte 5
@@ -278,42 +272,7 @@
           <span class="live-dot"></span>
           {$_('home.demo.label')}
         </div>
-        <div class="demo-frame">
-          <div class="demo-header">
-            <div class="demo-dots">
-              <span></span><span></span><span></span>
-            </div>
-            <span class="demo-url">{$_('home.demo.url')}</span>
-          </div>
-          <div class="demo-content">
-            <div class="demo-topic">
-              <h3>{$_('home.demo.topic')}</h3>
-              <div class="demo-meta">
-                <span>{$_('home.demo.participants')}</span>
-                <span>{$_('home.demo.round')}</span>
-                <span>{$_('home.demo.consensus')}</span>
-              </div>
-            </div>
-            <div class="demo-positions">
-              {#each demoPositions as pos}
-                <div class="demo-pos">
-                  <div class="demo-pos-header">
-                    <span>{pos.text}</span>
-                    <span class="pos-support">{pos.support} {$_('home.demo.posSupport')}</span>
-                  </div>
-                  <div class="demo-bar">
-                    <div class="demo-bar-fill" style="width: {pos.score}%"></div>
-                    <span>{pos.score}%</span>
-                  </div>
-                </div>
-              {/each}
-            </div>
-            <div class="demo-ai-note">
-              <span class="ai-icon">🤖</span>
-              <p>{$_('home.demo.aiNote')} <strong>{$_('home.demo.aiHighlight')}</strong></p>
-            </div>
-          </div>
-        </div>
+        <DiscussionDemo />
       </div>
     </div>
   </section>
@@ -1111,131 +1070,6 @@
     box-shadow: 0 0 8px #4ade8088;
     animation: pulse 2s ease-in-out infinite;
   }
-
-  .demo-frame {
-    background: #0f0f1e;
-    border: 1px solid #ffffff12;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 32px 80px #00000077;
-  }
-
-  .demo-header {
-    background: #17172a;
-    padding: 0.8rem 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    border-bottom: 1px solid #ffffff08;
-  }
-
-  .demo-dots {
-    display: flex;
-    gap: 0.4rem;
-  }
-
-  .demo-dots span {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: #3a3a5a;
-  }
-
-  .demo-url {
-    font-family: 'Sora', sans-serif;
-    font-size: 0.8rem;
-    color: #505080;
-  }
-
-  .demo-content { padding: 2rem; }
-
-  .demo-topic { margin-bottom: 1.5rem; }
-
-  .demo-topic h3 {
-    font-family: 'Frank Ruhl Libre', serif;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #f0f0f8;
-    margin-bottom: 0.75rem;
-  }
-
-  .demo-meta {
-    display: flex;
-    gap: 1.5rem;
-    font-family: 'Sora', sans-serif;
-    font-size: 0.85rem;
-    color: #60608a;
-  }
-
-  .demo-positions { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; }
-
-  .demo-pos {
-    background: #ffffff06;
-    border: 1px solid #ffffff0a;
-    border-radius: 10px;
-    padding: 0.9rem 1.1rem;
-  }
-
-  .demo-pos-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.6rem;
-    font-family: 'Sora', sans-serif;
-    font-size: 0.9rem;
-    color: #c0c0e0;
-  }
-
-  .pos-support {
-    font-size: 0.8rem;
-    color: #7070a0;
-  }
-
-  .demo-bar {
-    height: 6px;
-    background: #ffffff0a;
-    border-radius: 100px;
-    overflow: visible;
-    flex: 1;
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-
-  .demo-bar-fill {
-    height: 6px;
-    background: linear-gradient(90deg, #7c3aed, #818cf8);
-    border-radius: 100px;
-    transition: width 1s ease;
-  }
-
-  .demo-bar span {
-    font-family: 'Sora', sans-serif;
-    font-size: 0.78rem;
-    color: #7070a0;
-    margin-inline-start: 0.6rem;
-    white-space: nowrap;
-  }
-
-  .demo-ai-note {
-    background: #7c3aed11;
-    border: 1px solid #7c3aed33;
-    border-radius: 12px;
-    padding: 1rem 1.2rem;
-    display: flex;
-    gap: 0.8rem;
-    align-items: flex-start;
-  }
-
-  .ai-icon { font-size: 1.2rem; flex-shrink: 0; }
-
-  .demo-ai-note p {
-    font-family: 'Sora', sans-serif;
-    font-size: 0.88rem;
-    color: #a090d0;
-    line-height: 1.6;
-  }
-
-  .demo-ai-note strong { color: #c4b5fd; }
 
   /* ══════════════ TESTIMONIALS ══════════════ */
   .testimonials {
