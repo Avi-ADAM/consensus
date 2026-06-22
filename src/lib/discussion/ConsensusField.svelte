@@ -350,6 +350,21 @@
             <span>{$_('consensusField.supporters')}</span>
           </div>
         </div>
+        {#if canPropose && oninsert}
+          <button
+            type="button"
+            class="cf-add-btn"
+            onclick={() => {
+              if (sorted.length >= 2) {
+                oninsert!({ mode: 'between', afterId: sorted[0].id, beforeId: sorted[sorted.length - 1].id });
+              } else {
+                oninsert!({ mode: 'beyond_bottom' });
+              }
+            }}
+          >
+            + {$_('consensusField.addOpinion')}
+          </button>
+        {/if}
       {/if}
     </aside>
   </div>
@@ -799,6 +814,26 @@
     font-size: 0.7rem;
     color: var(--fg-3, #7070a0);
     margin-top: 0.15rem;
+  }
+
+  /* Add opinion button */
+  .cf-add-btn {
+    margin-top: 1rem;
+    width: 100%;
+    font-family: var(--font-sans, 'Sora', sans-serif);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #c4b5fd;
+    background: rgba(124, 58, 237, 0.12);
+    border: 1px dashed rgba(124, 58, 237, 0.45);
+    border-radius: 12px;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .cf-add-btn:hover {
+    background: rgba(124, 58, 237, 0.22);
+    border-color: rgba(124, 58, 237, 0.7);
   }
 
   @media (prefers-reduced-motion: reduce) {

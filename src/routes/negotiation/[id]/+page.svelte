@@ -577,7 +577,7 @@
 			<ConsensusField
 				{opinions}
 				{clauses}
-				canPropose={perms.propose}
+				canPropose={perms.propose || !live}
 				canVote={perms.vote}
 				oninsert={openForm}
 				onsupport={support}

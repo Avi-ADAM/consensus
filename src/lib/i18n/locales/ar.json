@@ -311,7 +311,8 @@
     "step3": "اطلب <em>صيغة وسط</em> — الذكاء الاصطناعي يقترح حلاً يمكن للجميع العيش معه",
     "overallConsensus": "التوافق العام",
     "opinionsCount": "المواقف في النقاش",
-    "selfPlacementTitle": "أين وضع المؤلف نفسه"
+    "selfPlacementTitle": "أين وضع المؤلف نفسه",
+    "addOpinion": "أضف رأياً"
   },
   "demoInteractive": {
     "badge": "عرض تفاعلي · بيانات نموذجية",

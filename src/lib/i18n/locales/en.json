@@ -311,7 +311,8 @@
     "step3": "Request a <em>middle formula</em> — AI proposes a solution everyone can live with",
     "overallConsensus": "Overall consensus",
     "opinionsCount": "Opinions in discussion",
-    "selfPlacementTitle": "Where the author placed themselves"
+    "selfPlacementTitle": "Where the author placed themselves",
+    "addOpinion": "Add opinion"
   },
   "demoInteractive": {
     "badge": "Interactive demo · Sample data",

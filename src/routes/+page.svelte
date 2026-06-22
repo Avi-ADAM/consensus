@@ -134,7 +134,7 @@
     <nav class="nav">
       <div class="nav-inner">
         <a href="/" class="logo">
-          <span class="logo-icon">⚖</span>
+          <img src="/logo.png" alt="Consensus" class="logo-img" />
           <span class="logo-text">Consensus</span>
         </a>
         <div class="nav-links">
@@ -277,7 +277,8 @@
     </div>
   </section>
 
-  <!-- ═══════════════════ TESTIMONIALS ═══════════════════ -->
+  <!-- ═══════════════════ TESTIMONIALS (מושבת זמנית) ═══════════════════ -->
+  <!--
   <section class="testimonials">
     <div class="section-inner">
       <div class="section-header" use:reveal>
@@ -313,6 +314,7 @@
       </div>
     </div>
   </section>
+  -->
 
   <!-- ═══════════════════ CTA ═══════════════════ -->
   <section class="cta-section">
@@ -342,7 +344,7 @@
     <div class="footer-inner">
       <div class="footer-brand">
         <a href="/" class="logo">
-          <span class="logo-icon">⚖</span>
+          <img src="/logo.png" alt="Consensus" class="logo-img" />
           <span class="logo-text">Consensus</span>
         </a>
         <p>{$_('home.footer.description')}</p>
@@ -500,8 +502,9 @@
     text-decoration: none;
   }
 
-  .logo-icon {
-    font-size: 1.8rem;
+  .logo-img {
+    height: 2rem;
+    width: auto;
     filter: drop-shadow(0 0 12px #7c3aed88);
   }
 
