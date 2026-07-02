@@ -8,7 +8,7 @@ import {
 	type Pole,
 	type OpinionKind
 } from './scale';
-import type { SourceMeta } from './bridge';
+import { parseResolution, type BridgeResolution, type SourceMeta } from './bridge';
 
 type FetchLike = typeof globalThis.fetch;
 
@@ -415,6 +415,49 @@ export async function createClause(
 	const res = await sendToSer<any>({ ...input }, 'CreateClause', 0, 0, false, fetch);
 	const id = res?.data?.createClause?.data?.id ?? res?.id;
 	return id ? String(id) : null;
+}
+
+/* ── Bridge resolution (the way back to the main app) ─────────────────── */
+
+/**
+ * Persist the signed decision on the Negotiation record and mark it completed.
+ * This is what the main app's source card (haluka / negoPend / …) reads back.
+ */
+export async function saveResolution(
+	negotiationId: string,
+	resolution: BridgeResolution,
+	fetch: FetchLike = globalThis.fetch
+): Promise<boolean> {
+	const res = await sendToSer<any>(
+		{ id: negotiationId, resolution, status: 'completed' },
+		'43SetNegotiationResolution',
+		0,
+		0,
+		false,
+		fetch
+	);
+	return Boolean(res?.data?.updateNegotiation?.data?.id);
+}
+
+/**
+ * Read the persisted resolution for a bridged object, if one was signed.
+ * Same lookup key as the find-or-create flow: (sourceType, sourceId).
+ */
+export async function loadResolutionBySource(
+	sourceType: string,
+	sourceId: string,
+	fetch: FetchLike = globalThis.fetch
+): Promise<BridgeResolution | null> {
+	const res = await sendToSer<any>(
+		{ sourceType, sourceId },
+		'GetNegotiationResolutionBySource',
+		0,
+		0,
+		false,
+		fetch
+	);
+	const node = res?.data?.negotiations?.data?.[0];
+	return node ? parseResolution(attr(node).resolution) : null;
 }
 
 export async function updateClause(

@@ -304,6 +304,67 @@ export function defaultAgreementPosition(opinions: Opinion[]): Opinion | null {
 	return solutions.length > 0 ? solutions[solutions.length - 1] : null;
 }
 
+/* ── Resolution: the signed decision persisted on the Negotiation ─────────
+ * The URL return (`negoBridge` param) only reaches the browser that clicked
+ * the link. The resolution is the durable half of the way back: it is written
+ * onto the Negotiation record itself, so ANY member opening the source card in
+ * the main app (haluka, negoPend, …) sees the agreed outcome and can act on
+ * it. The final approval still runs through the main app's own vote round. */
+
+export interface BridgeResolution {
+	v: 1;
+	sourceType: string;
+	sourceId: string;
+	/** The position the resolution was derived from. */
+	positionId: string;
+	heading: string;
+	/** Description of the chosen position — human summary of the agreement. */
+	summary: string;
+	/** key → agreed value, ready to prefill the source card (same as negoBridge). */
+	values: Record<string, string | number>;
+	terms: AgreedTerm[];
+	decidedAt: string;
+}
+
+export function buildResolution(
+	sourceType: string,
+	sourceId: string,
+	position: Opinion,
+	terms: AgreedTerm[]
+): BridgeResolution {
+	const values: Record<string, string | number> = {};
+	for (const t of terms) {
+		if (t.value !== null && t.value !== '') values[t.key] = t.value;
+	}
+	return {
+		v: 1,
+		sourceType,
+		sourceId,
+		positionId: position.id,
+		heading: position.heading,
+		summary: position.description,
+		values,
+		terms,
+		decidedAt: new Date().toISOString()
+	};
+}
+
+/** Parse a resolution blob coming back from the server (json or string). */
+export function parseResolution(raw: unknown): BridgeResolution | null {
+	let parsed: unknown = raw;
+	if (typeof raw === 'string') {
+		try {
+			parsed = JSON.parse(raw);
+		} catch {
+			return null;
+		}
+	}
+	if (typeof parsed !== 'object' || parsed === null) return null;
+	const r = parsed as Record<string, unknown>;
+	if (r.v !== 1 || typeof r.values !== 'object' || r.values === null) return null;
+	return r as unknown as BridgeResolution;
+}
+
 /**
  * Deep link back to the main app with the agreed terms, appended as a
  * `negoBridge` base64url param the source page reads to prefill its fields.
