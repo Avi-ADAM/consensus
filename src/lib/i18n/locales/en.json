@@ -165,7 +165,14 @@
       "keep": "Unchanged",
       "back": "Return agreement to negotiation page ←",
       "show": "Show agreement summary",
-      "hide": "Hide summary"
+      "hide": "Hide summary",
+      "finalize": "✅ Sign the decision and send it back",
+      "refinalize": "Update the signed decision",
+      "finalizing": "Saving…",
+      "finalizeHint": "Signing stores the decision on the discussion itself — every member sees it on the source card, even without the link. Final approval still runs through the regular vote round.",
+      "finalizeError": "Saving the decision failed. Please try again.",
+      "resolved": "Signed decision: {heading}",
+      "resolvedAt": "Signed on {date} and sent back to the source card."
     }
   },
   "discussion": {

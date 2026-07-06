@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
 	agreementFromPosition,
 	buildBridgeSeed,
+	buildResolution,
 	buildReturnUrl,
 	defaultAgreementPosition,
+	parseResolution,
 	encodeBridgePayload,
 	fieldChanged,
 	parseBridgePayload,
@@ -216,5 +218,51 @@ describe('defaultAgreementPosition', () => {
 		];
 		expect(defaultAgreementPosition(opinions)?.id).toBe('s2');
 		expect(defaultAgreementPosition([mk('a', 'opinion')])).toBeNull();
+	});
+});
+
+describe('buildResolution / parseResolution', () => {
+	const position: Opinion = {
+		id: 'synth',
+		heading: 'נוסחת אמצע',
+		description: 'מחיר 75 עם ניסוח מאוזן',
+		location: 50,
+		votes: 3,
+		color: colorFor(0),
+		isAnchor: false,
+		pole: 'none',
+		kind: 'proposed_solution'
+	};
+
+	const terms = [
+		{ key: 'price', label: 'שווי', kind: 'number' as const, value: 75, body: null, stance: 50 },
+		{ key: 'hm', label: 'כמות', kind: 'number' as const, value: null, body: null, stance: null }
+	];
+
+	it('packs only decided values and stamps the position', () => {
+		const r = buildResolution('tosplit', '42', position, terms);
+		expect(r).toMatchObject({
+			v: 1,
+			sourceType: 'tosplit',
+			sourceId: '42',
+			positionId: 'synth',
+			heading: 'נוסחת אמצע',
+			values: { price: 75 }
+		});
+		expect(r.values).not.toHaveProperty('hm');
+		expect(Date.parse(r.decidedAt)).not.toBeNaN();
+	});
+
+	it('round-trips through JSON (as Strapi stores it)', () => {
+		const r = buildResolution('tosplit', '42', position, terms);
+		expect(parseResolution(JSON.stringify(r))).toMatchObject({ values: { price: 75 } });
+		expect(parseResolution(r)).toMatchObject({ sourceId: '42' });
+	});
+
+	it('rejects malformed blobs', () => {
+		expect(parseResolution(null)).toBeNull();
+		expect(parseResolution('not json')).toBeNull();
+		expect(parseResolution({ v: 2, values: {} })).toBeNull();
+		expect(parseResolution({ v: 1 })).toBeNull();
 	});
 });

@@ -503,11 +503,14 @@
 
 		{#if meta?.sourceMeta && meta.sourceId}
 			<BridgeBar
+				negotiationId={data.id}
 				sourceMeta={meta.sourceMeta}
+				sourceType={meta.sourceType ?? ''}
 				sourceId={meta.sourceId}
 				{issues}
 				{clauses}
 				{opinions}
+				canFinalize={live && data.user.type === 'registered'}
 			/>
 		{/if}
 
