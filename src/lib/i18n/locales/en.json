@@ -11,10 +11,10 @@
     "edit": "Edit"
   },
   "nav": {
-    "faq": "FAQ",
     "map": "Discussion Map",
     "login": "Login",
-    "join": "Join"
+    "join": "Join",
+    "mainSite": "Main site"
   },
   "lang": {
     "he": "עברית",
@@ -24,90 +24,113 @@
   "home": {
     "pageTitle": "consensus · One Voice — Dispute Resolution Platform",
     "pageDescription": "AI platform for managing disputes in a structured and intelligent way. Define a topic, propose positions, and AI finds the formula everyone can live with.",
-    "badge": "{count} active discussions now",
+    "badge": "Open to take part · in Hebrew, Arabic and English",
     "heroTitle1": "When you get into details",
     "heroTitle2": "always",
     "heroTitle3": "you can find agreement",
     "heroSub": "AI platform for managing disputes in a structured and intelligent way.\nDefine a topic, propose positions, and AI finds the formula everyone can live with.",
     "startDiscussion": "Start Discussion",
     "watchDemo": "Watch how it works",
-    "stats": {
-      "successRate": "Success rate",
-      "avgRounds": "Average rounds",
-      "agreements": "Agreements created"
-    },
     "card": {
-      "activeDiscussion": "Active discussion",
       "round": "Round 2/4",
       "topic": "Should we adopt a hybrid work policy?",
       "meter": "Consensus meter",
       "aiNote": "🤖 AI recommends: Can reach agreement on a flexible model",
       "pos1": "3 days from office",
       "pos2": "2 days from home",
-      "pos3": "Full flexibility"
+      "pos3": "Full flexibility",
+      "illustration": "How it looks"
     },
     "features": {
       "tag": "Advantages",
       "title": "Why Consensus works",
       "subtitle": "Six reasons discussions reach a result",
-      "ai": { "title": "Smart AI Mediator", "desc": "AI identifies dimensions of dispute and proposes bridging formulas in real time" },
-      "rounds": { "title": "Improvement rounds", "desc": "Each round narrows gaps — the system measures closeness to consensus" },
-      "rtl": { "title": "RTL first", "desc": "Hebrew, Arabic and English — full user experience in every language" },
-      "realtime": { "title": "Instant update", "desc": "Optimistic UI — changes appear before server confirmation" },
-      "disputeMap": { "title": "Dispute map", "desc": "See which topics are \"hot\" in your area and find relevant discussions" },
-      "privacy": { "title": "Full privacy", "desc": "Secure SSO, httpOnly cookies, option to participate as guest" }
+      "ai": {
+        "title": "Smart AI Mediator",
+        "desc": "AI identifies dimensions of dispute and proposes bridging formulas in real time"
+      },
+      "rounds": {
+        "title": "Improvement rounds",
+        "desc": "Each round narrows gaps — the system measures closeness to consensus"
+      },
+      "rtl": {
+        "title": "RTL first",
+        "desc": "Hebrew, Arabic and English — full user experience in every language"
+      },
+      "realtime": {
+        "title": "Instant update",
+        "desc": "Optimistic UI — changes appear before server confirmation"
+      },
+      "disputeMap": {
+        "title": "Dispute map",
+        "desc": "See which topics are \"hot\" in your area and find relevant discussions"
+      },
+      "privacy": {
+        "title": "Full privacy",
+        "desc": "Secure SSO, httpOnly cookies, option to participate as guest"
+      }
     },
     "steps": {
       "tag": "Process",
       "title": "Four steps to agreement",
       "subtitle": "A simple process that leads to real results",
-      "s1": { "num": "01", "title": "Define topic", "desc": "Write the dispute in one clear sentence. AI helps formulate neutrally." },
-      "s2": { "num": "02", "title": "Propose position", "desc": "Each participant proposes their position. AI maps dimensions of agreement and dispute." },
-      "s3": { "num": "03", "title": "Support & refine", "desc": "Support other positions, mark dimensions of agreement, refine your position." },
-      "s4": { "num": "04", "title": "Reach agreement", "desc": "The system identifies a formula everyone can live with. Agreement is created." }
+      "s1": {
+        "num": "01",
+        "title": "Define topic",
+        "desc": "Write the dispute in one clear sentence. AI helps formulate neutrally."
+      },
+      "s2": {
+        "num": "02",
+        "title": "Propose position",
+        "desc": "Each participant proposes their position. AI maps dimensions of agreement and dispute."
+      },
+      "s3": {
+        "num": "03",
+        "title": "Support & refine",
+        "desc": "Support other positions, mark dimensions of agreement, refine your position."
+      },
+      "s4": {
+        "num": "04",
+        "title": "Reach agreement",
+        "desc": "The system identifies a formula everyone can live with. Agreement is created."
+      }
     },
     "demo": {
-      "label": "Live discussion — view only",
-      "url": "consensus.app/negotiation/demo",
-      "topic": "Should the city invest in public transportation or roads?",
-      "participants": "👥 24 participants",
-      "round": "🔄 Round 3 of 5",
-      "consensus": "✅ Consensus: 71%",
-      "pos1": "Full investment in public transportation",
-      "pos2": "Balanced development of both",
-      "pos3": "Priority to main road development",
-      "posSupport": "supporters",
-      "aiNote": "AI identifies: Position 2 represents a bridge point between the two approaches. Can formulate agreement on",
-      "aiHighlight": "\"Primary investment in public transportation on main routes, while improving existing roads\""
-    },
-    "testimonials": {
-      "tag": "Testimonials",
-      "title": "What users say",
-      "ariaLabel": "Testimonial {n}",
-      "t1": { "text": "The platform changed how our team makes decisions. Fewer arguments, more real agreements.", "author": "Dr. Michal Levy", "role": "Product Manager, SaaS" },
-      "t2": { "text": "We tried to resolve a dispute that had been going on for months. In three rounds we reached an agreement no one anticipated.", "author": "Ahmad Hassan", "role": "Lawyer, Tel Aviv" },
-      "t3": { "text": "The perfect tool for community discussions. AI that mediates without judging — exactly what we needed.", "author": "Sarah Cohen", "role": "Neighborhood Council Chair" }
+      "label": "Interactive demo — sample data"
     },
     "cta": {
-      "activeNow": "active discussions right now",
       "ready": "Ready to reach agreement?",
-      "subtitle": "Join thousands of people discovering that a middle ground can be found in every dispute",
+      "subtitle": "Open a discussion, invite the sides, and let the AI map where agreement already exists.",
       "join": "Join now — free",
       "nearby": "🗺️ See discussions near you"
     },
-    "footer": {
-      "description": "AI platform for resolving disputes in a structured and intelligent way",
-      "product": "Product",
-      "faq": "FAQ",
-      "map": "Discussion map",
-      "about": "About",
-      "contact": "Contact us",
-      "legal": "Legal",
-      "privacy": "Privacy policy",
-      "terms": "Terms of service",
-      "languages": "Languages",
-      "rights": "© 2026 Consensus Platform · Version 1.1"
+    "highlights": {
+      "languages": {
+        "value": "3",
+        "label": "languages — Hebrew · Arabic · English"
+      },
+      "ai": {
+        "value": "AI",
+        "label": "breaks positions into clauses and proposes bridges"
+      },
+      "noVeto": {
+        "value": "0",
+        "label": "vetoes — no one-sided rejection"
+      }
     }
+  },
+  "footer": {
+    "description": "AI platform for resolving disputes in a structured and intelligent way",
+    "product": "Consensus",
+    "map": "Discussion map",
+    "newDiscussion": "New discussion",
+    "network": "The 1lev1 network",
+    "mainSite": "Consent-based partnership management",
+    "agreement": "Global agreement on liberty",
+    "support": "Support the work",
+    "supportHint": "Through the project on the main site",
+    "rights": "© {year} consensus.1lev1.com",
+    "partOf": "Part of the 1lev1 network"
   },
   "new": {
     "title": "New Discussion",
@@ -217,7 +240,7 @@
     "title": "Local Discussions",
     "newDiscussion": "New Discussion",
     "intro": "Choose a place to see discussions relevant to people there.",
-    "noPlaces": "No places loaded (set STRAPI_URL).",
+    "noPlaces": "The list of places is unavailable right now. Try again in a moment.",
     "searchPlaceholder": "Search for a place…",
     "discussionsIn": "Discussions in {place}",
     "loading": "Loading…",
@@ -281,7 +304,7 @@
     "disputed": "Disputed"
   },
   "place": {
-    "noPlaces": "No places loaded (set STRAPI_URL).",
+    "noPlaces": "The list of places is unavailable right now. Try again in a moment.",
     "searchPlaceholder": "Search for a place…"
   },
   "issueMatrix": {
@@ -324,5 +347,12 @@
   "demoInteractive": {
     "badge": "Interactive demo · Sample data",
     "instruction": "Click \"Clauses\" on an opinion to see the breakdown into aspects, fill in a missing clause, or propose a middle formula."
+  },
+  "error": {
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The link you followed no longer exists, or was mistyped. Head back to the home page or open the discussion map.",
+    "genericTitle": "Something went wrong",
+    "genericBody": "The error was logged on our side. Try refreshing, and if it keeps happening head back to the home page.",
+    "home": "Home page"
   }
 }

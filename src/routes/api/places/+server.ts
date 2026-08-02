@@ -6,21 +6,25 @@ interface Place {
 	name: string;
 }
 
+const empty = () => json({ places: [] as Place[] });
+
 /**
  * List places (currently countries). The `cuntries` collection is a public,
  * unauthenticated GraphQL query in the shared Strapi — the same one the main
  * app's `love` page reads — so we query it directly. Degrades to an empty list
  * when env.STRAPI_URL is unset or the query fails, keeping the create form usable.
+ *
+ * Failures are logged server-side only: the response never carries the backend
+ * URL, status text or error string, since that is internal infrastructure detail.
  */
 export const GET: RequestHandler = async ({ fetch }) => {
-	console.log('STRAPI_URL value:', STRAPI_URL)
-	if (!STRAPI_URL) return json({ places: [], _debug: 'STRAPI_URL is empty' } as unknown as { places: Place[] });
+	if (!STRAPI_URL) {
+		console.error('[places] STRAPI_URL is not configured');
+		return empty();
+	}
 
 	const targetUrl = `${STRAPI_URL.replace(/\/$/, '')}/graphql`;
-	console.log('[places] fetching:', targetUrl);
-	console.log('[places] runtime:', typeof window === 'undefined' ? 'server (Node)' : 'browser');
 
-	const start = Date.now();
 	try {
 		const res = await fetch(targetUrl, {
 			method: 'POST',
@@ -30,29 +34,24 @@ export const GET: RequestHandler = async ({ fetch }) => {
 			}),
 			signal: AbortSignal.timeout(10_000)
 		});
-		console.log('[places] response status:', res.status, 'in', Date.now() - start, 'ms');
+
 		if (!res.ok) {
-			const body = await res.text();
-			console.error(`[places] non-ok response (${res.status}):`, body.slice(0, 300));
-			return json({ places: [] as Place[], _error: `HTTP ${res.status}` } as unknown as { places: Place[] });
+			console.error(`[places] non-ok response (${res.status}):`, (await res.text()).slice(0, 300));
+			return empty();
 		}
+
 		const data = await res.json();
-		console.log('[places] raw data keys:', Object.keys(data ?? {}));
-		if (data?.error) console.error('[places] graphql error:', JSON.stringify(data.error, null, 2));
-		if (data?.errors) console.error('[places] graphql errors:', JSON.stringify(data.errors, null, 2));
+		if (data?.errors) console.error('[places] graphql errors:', JSON.stringify(data.errors));
+
 		const places: Place[] = (data?.data?.cuntries?.data ?? []).map(
 			(c: { id: string | number; attributes?: { name?: string } }) => ({
 				id: String(c.id),
 				name: c.attributes?.name ?? ''
 			})
 		);
-		console.log('[places] places:', places.length);
 		return json({ places });
 	} catch (e) {
-		const elapsed = Date.now() - start;
-		console.error(`[places] fetch error after ${elapsed}ms:`, e);
-		// @ts-expect-error cause exists on TypeError
-		if (e?.cause) console.error('[places] cause:', e.cause);
-		return json({ places: [] as Place[], _error: String(e) } as unknown as { places: Place[] });
+		console.error('[places] fetch failed:', e);
+		return empty();
 	}
 };

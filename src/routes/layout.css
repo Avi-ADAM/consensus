@@ -1,3 +1,33 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+/*
+ * Document-level base. This lives here rather than in a route component so it
+ * applies on every page — a component-scoped `:global(body)` only takes effect
+ * while that component is mounted, which left every route except the home page
+ * on a white background.
+ */
+html,
+body {
+	max-width: 100%;
+	overflow-x: clip;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	font-family: 'Sora', 'Frank Ruhl Libre', sans-serif;
+	background: #09090f;
+	color: #f0f0f8;
+	scrollbar-width: thin;
+	scrollbar-color: #7c3aed #1a1a2e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+}

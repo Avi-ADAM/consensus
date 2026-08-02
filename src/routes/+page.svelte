@@ -4,16 +4,18 @@
 	import { locale } from '$lib/i18n';
 	import DiscussionDemo from '$lib/discussion/DiscussionDemo.svelte';
 
-	let activeDiscussionsCount = $state(2847);
 	let heroVisible = $state(false);
-	let currentTestimonial = $state(0);
 
 	const featureKeys = ['ai', 'rounds', 'rtl', 'realtime', 'disputeMap', 'privacy'];
 	const featureIcons = ['🧠', '🔄', '🌍', '⚡', '🗺️', '🔒'];
 
 	const stepKeys = ['s1', 's2', 's3', 's4'];
 
-	const testimonialKeys = ['t1', 't2', 't3'];
+	/**
+	 * Hero highlights. These describe what the product actually does — no usage
+	 * or success numbers, since we have none to stand behind.
+	 */
+	const highlightKeys = ['languages', 'ai', 'noVeto'];
 
 	let features = $derived(
 		featureKeys.map((k, i) => ({
@@ -31,15 +33,12 @@
 		}))
 	);
 
-	let testimonials = $derived(
-		testimonialKeys.map((k) => ({
-			text: $_(`home.testimonials.${k}.text`),
-			author: $_(`home.testimonials.${k}.author`),
-			role: $_(`home.testimonials.${k}.role`)
+	let highlights = $derived(
+		highlightKeys.map((k) => ({
+			value: $_(`home.highlights.${k}.value`),
+			label: $_(`home.highlights.${k}.label`)
 		}))
 	);
-
-	let countLocale = $derived($locale === 'he' ? 'he' : $locale === 'ar' ? 'ar' : 'en');
 
 	// Reveal Action for Svelte 5
 	/** @param {HTMLElement} node */
@@ -65,26 +64,8 @@
 	}
 
 	onMount(() => {
-		setTimeout(() => (heroVisible = true), 100);
-
-		const interval = setInterval(() => {
-			currentTestimonial = (currentTestimonial + 1) % testimonialKeys.length;
-		}, 4000);
-
-		// Animate counter
-		let count = 0;
-		const target = 2847;
-		const step = Math.ceil(target / 60);
-		const counter = setInterval(() => {
-			count = Math.min(count + step, target);
-			activeDiscussionsCount = count;
-			if (count >= target) clearInterval(counter);
-		}, 30);
-
-		return () => {
-			clearInterval(interval);
-			clearInterval(counter);
-		};
+		const timer = setTimeout(() => (heroVisible = true), 100);
+		return () => clearTimeout(timer);
 	});
 </script>
 
@@ -98,7 +79,9 @@
 	<meta property="og:site_name" content="consensus · פה אחד" />
 	<meta property="og:title" content={$_('home.pageTitle')} />
 	<meta property="og:description" content={$_('home.pageDescription')} />
-	<meta property="og:image" content="https://consensus.1lev1.com/logo.png" />
+	<meta property="og:image" content="https://consensus.1lev1.com/og.jpg" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
 	<meta property="og:image:alt" content="consensus" />
 	<meta property="og:locale" content={$locale === 'he' ? 'he_IL' : $locale === 'ar' ? 'ar_IL' : 'en_US'} />
 
@@ -106,13 +89,9 @@
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={$_('home.pageTitle')} />
 	<meta name="twitter:description" content={$_('home.pageDescription')} />
-	<meta name="twitter:image" content="https://consensus.1lev1.com/logo.png" />
+	<meta name="twitter:image" content="https://consensus.1lev1.com/og.jpg" />
 
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link
-		rel="stylesheet"
-		href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Frank+Ruhl+Libre:wght@400;700;900&display=swap"
-	/>
+	<link rel="canonical" href="https://consensus.1lev1.com/" />
 </svelte:head>
 
 <main>
@@ -123,8 +102,8 @@
       <div class="orb orb-1"></div>
       <div class="orb orb-2"></div>
       <div class="orb orb-3"></div>
-      <svg class="hero-grid" viewBox="0 0 100 100" preserveAspectRatio="none">
-        {#each Array(10) as _, i}
+      <svg class="hero-grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        {#each Array(10), i}
           <line x1={i*11} y1="0" x2={i*11} y2="100" stroke="white" stroke-opacity="0.04" stroke-width="0.3"/>
           <line x1="0" y1={i*11} x2="100" y2={i*11} stroke="white" stroke-opacity="0.04" stroke-width="0.3"/>
         {/each}
@@ -134,14 +113,14 @@
     <nav class="nav">
       <div class="nav-inner">
         <a href="/" class="logo">
-          <img src="/logo.png" alt="Consensus" class="logo-img" />
+          <img src="/logo-96.png" alt="" class="logo-img" width="42" height="42" />
           <span class="logo-text">Consensus</span>
         </a>
         <div class="nav-links">
-          <a href="/faq">{$_('nav.faq')}</a>
           <a href="/negotiation/local">{$_('nav.map')}</a>
+          <a href="https://www.1lev1.com" target="_blank" rel="noopener noreferrer">{$_('nav.mainSite')}</a>
           <a href="https://www.1lev1.com/login?from=https://consensus.1lev1.com" class="nav-login">{$_('nav.login')}</a>
-          <a href="https://www.1lev1.com/?from=https://consensus.1lev1.com" class="nav-cta">{$_('nav.join')}</a>
+          <a href="https://www.1lev1.com/signup" class="nav-cta">{$_('nav.join')}</a>
         </div>
       </div>
     </nav>
@@ -149,7 +128,7 @@
     <div class="hero-content">
       <div class="hero-badge">
         <span class="badge-dot"></span>
-        {$_('home.badge', { values: { count: activeDiscussionsCount.toLocaleString(countLocale) } })}
+        {$_('home.badge')}
       </div>
 
       <h1 class="hero-title">
@@ -179,11 +158,10 @@
       </div>
 
       <div class="hero-stats">
-        <div class="stat"><strong>94%</strong><span>{$_('home.stats.successRate')}</span></div>
-        <div class="stat-divider"></div>
-        <div class="stat"><strong>3.2</strong><span>{$_('home.stats.avgRounds')}</span></div>
-        <div class="stat-divider"></div>
-        <div class="stat"><strong>12k+</strong><span>{$_('home.stats.agreements')}</span></div>
+        {#each highlights as h, i (h.label)}
+          {#if i > 0}<div class="stat-divider"></div>{/if}
+          <div class="stat"><strong>{h.value}</strong><span>{h.label}</span></div>
+        {/each}
       </div>
     </div>
 
@@ -191,7 +169,7 @@
       <div class="consensus-card" use:reveal>
         <div class="card-header">
           <div class="topic-dot"></div>
-          <span>{$_('home.card.activeDiscussion')}</span>
+          <span>{$_('home.card.illustration')}</span>
           <span class="round-badge">{$_('home.card.round')}</span>
         </div>
         <h3>{$_('home.card.topic')}</h3>
@@ -205,7 +183,7 @@
           </div>
         </div>
         <div class="positions-preview">
-          {#each [$_('home.card.pos1'), $_('home.card.pos2'), $_('home.card.pos3')] as pos, i}
+          {#each [$_('home.card.pos1'), $_('home.card.pos2'), $_('home.card.pos3')] as pos, i (pos)}
             <div class="pos-chip" style="--delay: {i * 0.1}s">{pos}</div>
           {/each}
         </div>
@@ -226,7 +204,7 @@
       </div>
 
       <div class="features-grid">
-        {#each features as f, i}
+        {#each features as f, i (f.title)}
           <div class="feature-card" style="--i: {i}" use:reveal>
             <div class="feature-icon">{f.icon}</div>
             <h3>{f.title}</h3>
@@ -248,7 +226,7 @@
       </div>
 
       <div class="steps">
-        {#each steps as step, i}
+        {#each steps as step, i (step.num)}
           <div class="step" style="--i: {i}" use:reveal>
             <div class="step-num">{step.num}</div>
             <div class="step-content">
@@ -277,45 +255,6 @@
     </div>
   </section>
 
-  <!-- ═══════════════════ TESTIMONIALS (מושבת זמנית) ═══════════════════ -->
-  <!--
-  <section class="testimonials">
-    <div class="section-inner">
-      <div class="section-header" use:reveal>
-        <span class="section-tag">{$_('home.testimonials.tag')}</span>
-        <h2>{$_('home.testimonials.title')}</h2>
-      </div>
-
-      <div class="testimonials-carousel">
-        {#each testimonials as t, i}
-          <div class="testimonial" class:active={i === currentTestimonial} class:prev={i === (currentTestimonial - 1 + testimonials.length) % testimonials.length}>
-            <div class="quote-mark">"</div>
-            <blockquote>{t.text}</blockquote>
-            <div class="testimonial-author">
-              <div class="author-avatar">{t.author[0]}</div>
-              <div>
-                <strong>{t.author}</strong>
-                <span>{t.role}</span>
-              </div>
-            </div>
-          </div>
-        {/each}
-
-        <div class="carousel-dots">
-          {#each testimonials as _t, i}
-            <button
-              class="dot"
-              class:active={i === currentTestimonial}
-              onclick={() => currentTestimonial = i}
-              aria-label={$_('home.testimonials.ariaLabel', { values: { n: i + 1 } })}
-            ></button>
-          {/each}
-        </div>
-      </div>
-    </div>
-  </section>
-  -->
-
   <!-- ═══════════════════ CTA ═══════════════════ -->
   <section class="cta-section">
     <div class="cta-bg">
@@ -323,10 +262,6 @@
     </div>
     <div class="section-inner">
       <div class="cta-content" use:reveal>
-        <div class="cta-counter">
-          <span class="counter-num">{activeDiscussionsCount.toLocaleString(countLocale)}</span>
-          <span class="counter-label">{$_('home.cta.activeNow')}</span>
-        </div>
         <h2>{$_('home.cta.ready')}</h2>
         <p>{$_('home.cta.subtitle')}</p>
         <div class="cta-actions">
@@ -339,73 +274,17 @@
     </div>
   </section>
 
-  <!-- ═══════════════════ FOOTER ═══════════════════ -->
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <a href="/" class="logo">
-          <img src="/logo.png" alt="Consensus" class="logo-img" />
-          <span class="logo-text">Consensus</span>
-        </a>
-        <p>{$_('home.footer.description')}</p>
-        <div class="social-links">
-          <a href="#" aria-label="Twitter">𝕏</a>
-          <a href="#" aria-label="LinkedIn">in</a>
-          <a href="#" aria-label="GitHub">⌥</a>
-        </div>
-      </div>
-
-      <div class="footer-links">
-        <div class="footer-col">
-          <h4>{$_('home.footer.product')}</h4>
-          <a href="/faq">{$_('home.footer.faq')}</a>
-          <a href="/negotiation/local">{$_('home.footer.map')}</a>
-          <a href="/about">{$_('home.footer.about')}</a>
-          <a href="/contact">{$_('home.footer.contact')}</a>
-        </div>
-        <div class="footer-col">
-          <h4>{$_('home.footer.legal')}</h4>
-          <a href="/privacy">{$_('home.footer.privacy')}</a>
-          <a href="/terms">{$_('home.footer.terms')}</a>
-        </div>
-        <div class="footer-col">
-          <h4>{$_('home.footer.languages')}</h4>
-          <a href="?lang=he">{$_('lang.he')}</a>
-          <a href="?lang=ar">{$_('lang.ar')}</a>
-          <a href="?lang=en">{$_('lang.en')}</a>
-        </div>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>{$_('home.footer.rights')}</span>
-    </div>
-  </footer>
 </main>
 
 <style>
   /* ══════════════ BASE ══════════════ */
-  :global(html),
-  :global(body) {
-    max-width: 100%;
-    overflow-x: clip;
-  }
-
-  :global(body) {
-    font-family: 'Sora', 'Frank Ruhl Libre', sans-serif;
-    background: #09090f;
-    color: #f0f0f8;
-    scrollbar-width: thin;
-    scrollbar-color: #7c3aed #1a1a2e;
-  }
-
-  :global(html) { scroll-behavior: smooth; }
+  /* Document-level base (background, fonts, scrollbar) lives in layout.css so
+     it applies to every route, not only while this page is mounted. */
 
   :global(.visible) {
     opacity: 1 !important;
     transform: translateY(0) scale(1) !important;
   }
-
-  .reveal { opacity: 0; transform: translateY(30px); } /* Fallback or class usage */
 
   main {
     font-family: 'Frank Ruhl Libre', 'Sora', serif;
@@ -925,7 +804,7 @@
     z-index: 2;
   }
 
-  .feature-card.visible {
+  .feature-card:global(.visible) {
     opacity: 1;
     transform: translateY(0);
   }
@@ -1004,7 +883,7 @@
     transition: opacity 0.7s ease calc(var(--i) * 0.15s), transform 0.7s ease calc(var(--i) * 0.15s);
   }
 
-  .step.visible { opacity: 1; transform: translateY(0); }
+  .step:global(.visible) { opacity: 1; transform: translateY(0); }
 
   .step-num {
     font-family: 'Sora', sans-serif;
@@ -1072,113 +951,6 @@
     animation: pulse 2s ease-in-out infinite;
   }
 
-  /* ══════════════ TESTIMONIALS ══════════════ */
-  .testimonials {
-    padding: 8rem 0;
-    background: linear-gradient(180deg, #09090f, #0d0820, #09090f);
-    overflow: hidden;
-  }
-
-  .testimonials-carousel {
-    max-width: 700px;
-    margin: 0 auto;
-    position: relative;
-    min-height: 260px;
-  }
-
-  .testimonial {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transform: translateX(-30px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-    pointer-events: none;
-    padding-bottom: 3rem;
-  }
-
-  .testimonial.active {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-  }
-
-  .testimonial.prev {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-
-  .quote-mark {
-    font-size: 5rem;
-    line-height: 1;
-    color: #7c3aed22;
-    font-family: 'Frank Ruhl Libre', serif;
-    margin-bottom: -1.5rem;
-  }
-
-  blockquote {
-    font-family: 'Frank Ruhl Libre', serif;
-    font-size: 1.25rem;
-    line-height: 1.7;
-    color: #d0d0f0;
-    font-style: italic;
-    margin-bottom: 1.5rem;
-  }
-
-  .testimonial-author {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    font-family: 'Sora', sans-serif;
-  }
-
-  .author-avatar {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #7c3aed, #4f46e5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1rem;
-    color: white;
-    flex-shrink: 0;
-  }
-
-  .testimonial-author strong {
-    display: block;
-    font-size: 0.95rem;
-    color: #f0f0f8;
-    font-weight: 600;
-  }
-
-  .testimonial-author span {
-    font-size: 0.82rem;
-    color: #7070a0;
-  }
-
-  .carousel-dots {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .dot {
-    width: 8px; height: 8px;
-    border-radius: 100px;
-    background: #3a3a5a;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s, width 0.3s;
-  }
-
-  .dot.active {
-    background: #7c3aed;
-    width: 24px;
-  }
-
   /* ══════════════ CTA ══════════════ */
   .cta-section {
     padding: 8rem 0;
@@ -1209,32 +981,6 @@
     margin: 0 auto;
   }
 
-  .cta-counter {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.3rem;
-    margin-bottom: 2rem;
-  }
-
-  .counter-num {
-    font-family: 'Sora', sans-serif;
-    font-size: 4rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #a78bfa, #818cf8, #c4b5fd);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-  }
-
-  .counter-label {
-    font-family: 'Sora', sans-serif;
-    font-size: 0.9rem;
-    color: #7070a0;
-    letter-spacing: 0.05em;
-  }
-
   .cta-content h2 {
     font-family: 'Frank Ruhl Libre', serif;
     font-size: clamp(2rem, 4vw, 3rem);
@@ -1255,96 +1001,6 @@
     gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
-  }
-
-  /* ══════════════ FOOTER ══════════════ */
-  footer {
-    background: #07070d;
-    border-top: 1px solid #ffffff08;
-    padding: 4rem 0 2rem;
-  }
-
-  .footer-inner {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: 4rem;
-    margin-bottom: 3rem;
-  }
-
-  .footer-brand p {
-    font-family: 'Sora', sans-serif;
-    font-size: 0.9rem;
-    color: #7070a0;
-    margin-top: 0.8rem;
-    margin-bottom: 1.2rem;
-    line-height: 1.6;
-  }
-
-  .social-links {
-    display: flex;
-    gap: 0.8rem;
-  }
-
-  .social-links a {
-    width: 38px; height: 38px;
-    border: 1px solid #3a3a5a;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #7070a0;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: border-color 0.2s, color 0.2s;
-  }
-
-  .social-links a:hover { border-color: #7c3aed; color: #c4b5fd; }
-
-  .footer-links {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-  }
-
-  .footer-col h4 {
-    font-family: 'Sora', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #505080;
-    margin-bottom: 1rem;
-  }
-
-  .footer-col {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .footer-col a {
-    font-family: 'Sora', sans-serif;
-    font-size: 0.88rem;
-    color: #7070a0;
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-
-  .footer-col a:hover { color: #c4b5fd; }
-
-  .footer-bottom {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 1.5rem 2rem 0;
-    border-top: 1px solid #ffffff08;
-    display: flex;
-    justify-content: center;
-    font-family: 'Sora', sans-serif;
-    font-size: 0.82rem;
-    color: #4a4a6a;
   }
 
   /* ══════════════ RESPONSIVE ══════════════ */
@@ -1368,7 +1024,6 @@
     .features-grid { grid-template-columns: repeat(2, 1fr); }
     .steps { grid-template-columns: repeat(2, 1fr); }
     .step-connector { display: none; }
-    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
   }
 
   @media (max-width: 640px) {
@@ -1379,7 +1034,6 @@
     .nav-links a:not(.nav-cta):not(.nav-login) { display: none; }
     .nav-inner { padding: 0 1rem; gap: 0.75rem; }
     .nav-links { gap: 0.6rem; }
-    .footer-links { grid-template-columns: repeat(2, 1fr); }
     .cta-actions { flex-direction: column; align-items: center; }
   }
 </style>
