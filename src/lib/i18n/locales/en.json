@@ -35,11 +35,11 @@
       "round": "Round 2/4",
       "topic": "Should we adopt a hybrid work policy?",
       "meter": "Consensus meter",
-      "aiNote": "🤖 AI recommends: Can reach agreement on a flexible model",
       "pos1": "3 days from office",
       "pos2": "2 days from home",
       "pos3": "Full flexibility",
-      "illustration": "How it looks"
+      "illustration": "Simplified illustration",
+      "seeReal": "The real component — live discussion below"
     },
     "features": {
       "tag": "Advantages",
@@ -124,13 +124,13 @@
     "product": "Consensus",
     "map": "Discussion map",
     "newDiscussion": "New discussion",
-    "network": "The 1lev1 network",
+    "network": "The 1💗1 network",
     "mainSite": "Consent-based partnership management",
     "agreement": "Global agreement on liberty",
     "support": "Support the work",
     "supportHint": "Through the project on the main site",
     "rights": "© {year} consensus.1lev1.com",
-    "partOf": "Part of the 1lev1 network"
+    "partOf": "Part of the 1💗1 network"
   },
   "new": {
     "title": "New Discussion",

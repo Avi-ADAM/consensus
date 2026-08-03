@@ -3,7 +3,8 @@
 
 	/**
 	 * Site-wide footer. Every link here must resolve to a page that exists —
-	 * either a route in this app or a live property of the 1lev1 network.
+	 * either a route in this app or a live property of the 1💗1 network.
+	 * (The brand is written "1💗1"; "1lev1.com" only ever appears as a hostname.)
 	 * Placeholder links (`#`) and routes that are not implemented do not belong
 	 * here: a dead link in the footer is the cheapest way to lose a visitor.
 	 */

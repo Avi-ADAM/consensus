@@ -166,7 +166,9 @@
     </div>
 
     <div class="hero-visual">
-      <div class="consensus-card" use:reveal>
+      <!-- A simplified sketch, not the product. It links down to the real
+           component so nobody mistakes the mock-up for how the app behaves. -->
+      <a class="consensus-card" href="#live-demo" use:reveal>
         <div class="card-header">
           <div class="topic-dot"></div>
           <span>{$_('home.card.illustration')}</span>
@@ -188,9 +190,12 @@
           {/each}
         </div>
         <div class="card-footer">
-          <span>{$_('home.card.aiNote')}</span>
+          <span>{$_('home.card.seeReal')}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path d="M12 5v14M5 12l7 7 7-7"/>
+          </svg>
         </div>
-      </div>
+      </a>
     </div>
   </section>
 
@@ -243,7 +248,7 @@
   </section>
 
   <!-- ═══════════════════ LIVE DEMO ═══════════════════ -->
-  <section class="live-demo">
+  <section class="live-demo" id="live-demo">
     <div class="section-inner">
       <div class="demo-wrapper" use:reveal>
         <div class="demo-label">
@@ -613,6 +618,9 @@
   .hero.visible .hero-visual { opacity: 1; transform: translateY(0) scale(1); }
 
   .consensus-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
     background: #ffffff08;
     backdrop-filter: blur(24px);
     border: 1px solid #ffffff14;
@@ -621,6 +629,29 @@
     max-width: 420px;
     width: 100%;
     box-shadow: 0 32px 80px #00000055, inset 0 1px 0 #ffffff10;
+    transition: border-color 0.25s, transform 0.25s;
+  }
+
+  .consensus-card:hover,
+  .consensus-card:focus-visible {
+    border-color: #7c3aed66;
+    transform: translateY(-4px);
+  }
+
+  .consensus-card:hover .card-footer {
+    background: #7c3aed22;
+    border-color: #7c3aed66;
+    color: #c4b5fd;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .consensus-card {
+      transition: none;
+    }
+    .consensus-card:hover,
+    .consensus-card:focus-visible {
+      transform: none;
+    }
   }
 
   .card-header {
@@ -716,6 +747,10 @@
   }
 
   .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
     background: #7c3aed11;
     border: 1px solid #7c3aed33;
     border-radius: 10px;
@@ -724,6 +759,11 @@
     font-family: 'Sora', sans-serif;
     color: #a78bfa;
     line-height: 1.5;
+    transition: background 0.25s, border-color 0.25s, color 0.25s;
+  }
+
+  .card-footer svg {
+    flex-shrink: 0;
   }
 
   /* ══════════════ SECTIONS SHARED ══════════════ */
