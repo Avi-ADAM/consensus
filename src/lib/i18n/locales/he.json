@@ -35,11 +35,11 @@
       "round": "סבב 2/4",
       "topic": "האם לאמץ מדיניות עבודה היברידית?",
       "meter": "מד הסכמה",
-      "aiNote": "🤖 AI ממליץ: ניתן להגיע להסכמה על מודל גמיש",
       "pos1": "3 ימים מהמשרד",
       "pos2": "2 ימים מהבית",
       "pos3": "גמישות מלאה",
-      "illustration": "כך זה נראה"
+      "illustration": "המחשה מפושטת",
+      "seeReal": "הרכיב האמיתי — דיון חי למטה"
     },
     "features": {
       "tag": "יתרונות",
@@ -124,13 +124,13 @@
     "product": "Consensus",
     "map": "מפת דיונים",
     "newDiscussion": "דיון חדש",
-    "network": "רשת 1lev1",
+    "network": "רשת 1💗1",
     "mainSite": "ניהול שותפויות בהסכמה",
     "agreement": "הסכמה עולמית על חירות",
     "support": "תמיכה בפעילות",
     "supportHint": "דרך הפרויקט באתר הראשי",
     "rights": "© {year} consensus.1lev1.com",
-    "partOf": "חלק מרשת 1lev1"
+    "partOf": "חלק מרשת 1💗1"
   },
   "new": {
     "title": "דיון חדש",
