@@ -11,9 +11,6 @@
 	const MAIN_SITE = 'https://www.1lev1.com';
 	const AGREEMENT_SITE = 'https://agreement.1lev1.com';
 	const SUPPORT_PROJECT = 'https://www.1lev1.com/project/49';
-
-	// String, not number: the ICU formatter would render 2026 as "2,026".
-	const year = String(new Date().getFullYear());
 </script>
 
 <footer class="site-footer">
@@ -54,8 +51,6 @@
 	</div>
 
 	<div class="footer-bottom">
-		<span class="rights">{$_('footer.rights', { values: { year } })}</span>
-		<span class="dot" aria-hidden="true">·</span>
 		<span>{$_('footer.partOf')}</span>
 	</div>
 </footer>
@@ -65,7 +60,7 @@
 		background: #07070d;
 		border-top: 1px solid #ffffff08;
 		/* The bottom padding also keeps the floating language switcher
-		   (fixed, bottom-left in +layout.svelte) off the copyright line. */
+		   (fixed, bottom-left in +layout.svelte) off the bottom line. */
 		padding: 4rem 0 4.5rem;
 		font-family: 'Sora', sans-serif;
 	}
@@ -187,13 +182,6 @@
 		direction: ltr;
 		unicode-bidi: isolate;
 		margin-top: 0.1rem;
-	}
-
-	/* "© 2026 consensus.1lev1.com" is a Latin run; without isolation the RTL
-	   layout reorders it to "consensus.1lev1.com 2026 ©". */
-	.rights {
-		direction: ltr;
-		unicode-bidi: isolate;
 	}
 
 	.footer-bottom {

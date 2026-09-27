@@ -1,5 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { STRAPI_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 interface Place {
 	id: string;
@@ -16,6 +17,10 @@ const empty = () => json({ places: [] as Place[] });
  *
  * Failures are logged server-side only: the response never carries the backend
  * URL, status text or error string, since that is internal infrastructure detail.
+ *
+ * The nginx in front of the shared Strapi answers 403 to any request without the
+ * `x-strapi-gate` secret while the gate is closed (`strapi-gate close` on the VPS),
+ * so the secret is sent on every call. It must equal the main app's STRAPI_GATE_KEY.
  */
 export const GET: RequestHandler = async ({ fetch }) => {
 	if (!STRAPI_URL) {
@@ -23,12 +28,18 @@ export const GET: RequestHandler = async ({ fetch }) => {
 		return empty();
 	}
 
+	const gateKey = env.STRAPI_GATE_KEY?.trim();
+	if (!gateKey) console.error('[places] STRAPI_GATE_KEY is not configured — a closed gate will 403');
+
 	const targetUrl = `${STRAPI_URL.replace(/\/$/, '')}/graphql`;
 
 	try {
 		const res = await fetch(targetUrl, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: {
+				'Content-Type': 'application/json',
+				...(gateKey ? { 'x-strapi-gate': gateKey } : {})
+			},
 			body: JSON.stringify({
 				query: `query { cuntries(pagination: { limit: -1 }) { data { id attributes { name } } } }`
 			}),
