@@ -33,6 +33,8 @@
     savingClauseId?: string | null;
     onfill?: (issue: Issue) => void;
     onaddmanual?: (issue: Issue, draft: { body: string; stanceValue: number }) => void;
+    /** Add a clause on any issue — an existing one by title, or a new one. Resolves false on failure. */
+    onaddclause?: (draft: { issueTitle: string; body: string; stanceValue: number }) => Promise<boolean>;
     onupdate?: (clauseId: string, draft: { body: string; stanceValue: number }) => void;
     onconfirm?: (clauseId: string) => void;
     onclose?: () => void;
@@ -51,6 +53,7 @@
     savingClauseId = null,
     onfill,
     onaddmanual,
+    onaddclause,
     onupdate,
     onconfirm,
     onclose,
@@ -99,6 +102,35 @@
     manualStance = 50;
   }
   function cancelManual() { manualIssueId = null; }
+
+  // Free-form "add clause" (any issue, existing or new)
+  let adding = $state(false);
+  let addIssueTitle = $state('');
+  let addBody = $state('');
+  let addStance = $state(50);
+  let addBusy = $state(false);
+  let addError = $state(false);
+  const addIsNewIssue = $derived(
+    addIssueTitle.trim() !== '' &&
+      !issues.some((i) => i.title.trim().toLowerCase() === addIssueTitle.trim().toLowerCase())
+  );
+  function startAdd() {
+    adding = true;
+    addIssueTitle = '';
+    addBody = '';
+    addStance = 50;
+    addError = false;
+  }
+  async function saveAdd() {
+    const body = addBody.trim();
+    if (!body || addBusy || !onaddclause) return;
+    addBusy = true;
+    addError = false;
+    const ok = await onaddclause({ issueTitle: addIssueTitle.trim(), body, stanceValue: addStance });
+    addBusy = false;
+    if (ok) adding = false;
+    else addError = true;
+  }
   function saveManual(issue: Issue) {
     const b = manualBody.trim();
     if (!b) return;
@@ -310,6 +342,58 @@
 
       {#if clauses.length === 0 && gaps.length === 0}
         <p class="cp-muted">{$_('clauses.empty')}</p>
+      {/if}
+
+      {#if canEdit && onaddclause}
+        {#if adding}
+          <section class="cp-add">
+            <h3 class="cp-sec-title">{$_('clauses.addClauseTitle')}</h3>
+            <label class="cp-range">
+              {$_('opinionForm.issueLabel')}
+              {#if addIsNewIssue}<span class="cp-new">· {$_('opinionForm.newIssue')}</span>{/if}
+              <input
+                class="cp-ta cp-input"
+                bind:value={addIssueTitle}
+                list={issues.length > 0 ? 'cp-issue-options' : undefined}
+                placeholder={$_('opinionForm.issuePlaceholder')}
+              />
+            </label>
+            {#if issues.length > 0}
+              <datalist id="cp-issue-options">
+                {#each sortedIssues as issue (issue.id)}
+                  <option value={issue.title}></option>
+                {/each}
+              </datalist>
+            {/if}
+            <label class="cp-range">
+              {$_('opinionForm.bodyLabel')}
+              <textarea
+                rows="2"
+                class="cp-ta cp-input"
+                placeholder={$_('clauses.clausePlaceholder')}
+                bind:value={addBody}
+              ></textarea>
+            </label>
+            <label class="cp-range">
+              {$_('clauses.stanceLabel', { values: { value: addStance } })}
+              <input type="range" min="0" max="100" bind:value={addStance} />
+            </label>
+            {#if addError}
+              <p class="cp-error">{$_('clauses.addClauseError')}</p>
+            {/if}
+            <div class="cp-edit-actions">
+              <button type="button" class="btn-ghost-sm" onclick={() => (adding = false)}>{$_('clauses.cancel')}</button>
+              <button
+                type="button"
+                class="btn-violet-sm"
+                disabled={!addBody.trim() || addBusy}
+                onclick={saveAdd}
+              >{addBusy ? $_('clauses.addingClause') : $_('clauses.add')}</button>
+            </div>
+          </section>
+        {:else}
+          <button type="button" class="cp-add-btn" onclick={startAdd}>{$_('clauses.addClause')}</button>
+        {/if}
       {/if}
     </div>
   </div>
@@ -601,6 +685,30 @@
     gap: 0.5rem;
     flex-shrink: 0;
   }
+
+  /* ── Free-form add ── */
+  .cp-add {
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    background: rgba(124, 58, 237, 0.06);
+    border-radius: 13px;
+    padding: 0.9rem 1rem;
+  }
+  .cp-input { margin-top: 0.35rem; }
+  .cp-new { color: rgba(253, 230, 138, 0.8); margin-inline-start: 0.25rem; }
+  .cp-error { color: #fda4af; font-size: 0.8rem; margin-top: 0.5rem; }
+  .cp-add-btn {
+    align-self: flex-start;
+    font-family: var(--font-sans, 'Sora', sans-serif);
+    font-size: 0.85rem;
+    color: #ddd6fe;
+    background: rgba(124, 58, 237, 0.12);
+    border: 1px dashed rgba(167, 139, 250, 0.5);
+    border-radius: 10px;
+    padding: 0.55rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .cp-add-btn:hover { background: rgba(124, 58, 237, 0.22); }
 
   /* ── Empty state ── */
   .cp-muted {

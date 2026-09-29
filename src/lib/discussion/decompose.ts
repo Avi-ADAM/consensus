@@ -3,10 +3,11 @@ import {
 	createIssue,
 	createPosition,
 	listIssues,
+	updateClause,
 	updatePositionLocation,
 	type OpinionInput
 } from './api';
-import { locationFromClauses, type Clause, type Issue } from './scale';
+import { locationFromClauses, type Clause, type Issue, type Origin } from './scale';
 
 type OpinionText = Pick<OpinionInput, 'heading' | 'description'>;
 
@@ -81,6 +82,105 @@ export async function decomposeOpinion(
 	return { clauses: clauses.filter((c) => c.body), gaps };
 }
 
+/** A clause the author (or the AI) drafted, not yet saved. */
+export interface ClauseDraft {
+	body: string;
+	/** An existing issue's id, when the clause hangs on one. */
+	issueId: string | null;
+	/** The issue's title — used to match or create the issue when there is no id. */
+	issueTitle: string;
+	stanceValue: number;
+	origin: Origin;
+}
+
+function titleKey(title: string): string {
+	return title.trim().toLowerCase();
+}
+
+/**
+ * Save clause drafts onto an opinion. Each resolves onto an issue: its id when
+ * that is a known issue, else an existing issue with the same title, else a new
+ * issue (created once per title within the pass). Drafts without a body are
+ * skipped. Returns the clauses that were saved.
+ *
+ * `confirm` marks them confirmed by the author — for clauses the author wrote or
+ * reviewed before submitting, so they do not come back asking for approval.
+ */
+export async function attachClauses(
+	input: {
+		negotiationId: string;
+		positionId: string;
+		drafts: ClauseDraft[];
+		existingIssues: Issue[];
+		confirm?: boolean;
+	},
+	fetch: FetchLike = globalThis.fetch
+): Promise<Clause[]> {
+	const knownIds = new Set(input.existingIssues.map((i) => i.id));
+	const byTitle = new Map<string, string>();
+	for (const issue of input.existingIssues) byTitle.set(titleKey(issue.title), issue.id);
+	let order = input.existingIssues.length;
+
+	const saved: Clause[] = [];
+	for (const draft of input.drafts) {
+		const body = draft.body.trim();
+		if (!body) continue;
+		const title = draft.issueTitle.trim();
+
+		let issueId = draft.issueId && knownIds.has(draft.issueId) ? draft.issueId : null;
+		if (!issueId && title) {
+			issueId = byTitle.get(titleKey(title)) ?? null;
+			if (!issueId) {
+				issueId = await createIssue(
+					{
+						negotiationId: input.negotiationId,
+						title,
+						order: order++,
+						origin: draft.origin
+					},
+					fetch
+				).catch(() => null);
+				if (issueId) {
+					byTitle.set(titleKey(title), issueId);
+					knownIds.add(issueId);
+				}
+			}
+		}
+
+		const stanceValue = clampStance(draft.stanceValue);
+		const clauseId = await createClause(
+			{
+				negotiationId: input.negotiationId,
+				positionId: input.positionId,
+				issueId,
+				body,
+				stanceValue,
+				origin: draft.origin
+			},
+			fetch
+		).catch(() => null);
+		if (!clauseId) continue;
+
+		let confirmedByAuthor = false;
+		if (input.confirm) {
+			confirmedByAuthor = await updateClause({ id: clauseId, confirmedByAuthor: true }, fetch)
+				.then(() => true)
+				.catch(() => false);
+		}
+
+		saved.push({
+			id: clauseId,
+			positionId: input.positionId,
+			issueId,
+			body,
+			stanceValue,
+			origin: draft.origin,
+			confirmedByAuthor
+		});
+	}
+	return saved;
+}
+
 /**
  * Decompose a freshly created opinion and persist its issues + clauses, then
  * re-derive and store the opinion's location. Resilient: if the assistant or
@@ -111,55 +211,15 @@ export async function decomposeAndPersist(
 	).catch(() => null);
 	if (!result || result.clauses.length === 0) return result;
 
-	// Resolve each clause onto an issue id, creating issues as needed and
-	// deduping by title within this pass.
-	const byTitle = new Map<string, string>();
-	for (const issue of existingIssues) byTitle.set(issue.title.trim(), issue.id);
-	let order = existingIssues.length;
-
-	const saved: Clause[] = [];
-	for (const c of result.clauses) {
-		let issueId = c.issueId && byTitle.size ? c.issueId : null;
-		if (!issueId && c.issueTitle) {
-			issueId = byTitle.get(c.issueTitle) ?? null;
-			if (!issueId) {
-				issueId = await createIssue(
-					{
-						negotiationId: input.negotiationId,
-						title: c.issueTitle,
-						order: order++,
-						origin: 'ai'
-					},
-					fetch
-				).catch(() => null);
-				if (issueId) byTitle.set(c.issueTitle, issueId);
-			}
-		}
-
-		const clauseId = await createClause(
-			{
-				negotiationId: input.negotiationId,
-				positionId: input.positionId,
-				issueId,
-				body: c.body,
-				stanceValue: c.stanceValue,
-				origin: 'ai'
-			},
-			fetch
-		).catch(() => null);
-
-		if (clauseId) {
-			saved.push({
-				id: clauseId,
-				positionId: input.positionId,
-				issueId,
-				body: c.body,
-				stanceValue: c.stanceValue,
-				origin: 'ai',
-				confirmedByAuthor: false
-			});
-		}
-	}
+	const saved = await attachClauses(
+		{
+			negotiationId: input.negotiationId,
+			positionId: input.positionId,
+			drafts: result.clauses.map((c) => ({ ...c, origin: 'ai' as const })),
+			existingIssues
+		},
+		fetch
+	);
 
 	const derived = locationFromClauses(saved);
 	if (derived !== null) {
@@ -324,54 +384,15 @@ export async function persistSynthesis(
 	).catch(() => null);
 	if (!positionId) return null;
 
-	const byTitle = new Map<string, string>();
-	const byId = new Set(input.existingIssues.map((i) => i.id));
-	for (const issue of input.existingIssues) byTitle.set(issue.title.trim(), issue.id);
-	let order = input.existingIssues.length;
-
-	const saved: Clause[] = [];
-	for (const c of input.draft.clauses) {
-		let issueId = c.issueId && byId.has(c.issueId) ? c.issueId : null;
-		if (!issueId && c.issueTitle) {
-			issueId = byTitle.get(c.issueTitle) ?? null;
-			if (!issueId) {
-				issueId = await createIssue(
-					{
-						negotiationId: input.negotiationId,
-						title: c.issueTitle,
-						order: order++,
-						origin: 'ai'
-					},
-					fetch
-				).catch(() => null);
-				if (issueId) byTitle.set(c.issueTitle, issueId);
-			}
-		}
-
-		const clauseId = await createClause(
-			{
-				negotiationId: input.negotiationId,
-				positionId,
-				issueId,
-				body: c.body,
-				stanceValue: c.stanceValue,
-				origin: 'ai'
-			},
-			fetch
-		).catch(() => null);
-
-		if (clauseId) {
-			saved.push({
-				id: clauseId,
-				positionId,
-				issueId,
-				body: c.body,
-				stanceValue: c.stanceValue,
-				origin: 'ai',
-				confirmedByAuthor: false
-			});
-		}
-	}
+	const saved = await attachClauses(
+		{
+			negotiationId: input.negotiationId,
+			positionId,
+			drafts: input.draft.clauses.map((c) => ({ ...c, origin: 'ai' as const })),
+			existingIssues: input.existingIssues
+		},
+		fetch
+	);
 
 	const derived = locationFromClauses(saved);
 	if (derived !== null) {

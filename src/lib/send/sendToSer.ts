@@ -1,3 +1,5 @@
+import { loginHref } from '$lib/links';
+
 type FetchLike = typeof globalThis.fetch;
 
 /**
@@ -23,8 +25,9 @@ export async function sendToSer<T = unknown>(
 	});
 
 	if (res.status === 401) {
+		// Sessions live on the main site; this app has no /login of its own.
 		if (typeof window !== 'undefined') {
-			window.location.href = '/login';
+			window.location.href = loginHref(window.location.href);
 		}
 		throw new Error('Unauthorized');
 	}

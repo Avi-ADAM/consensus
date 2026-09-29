@@ -26,6 +26,7 @@
 		type Stance
 	} from '$lib/discussion/api';
 	import {
+		attachClauses,
 		decomposeAndPersist,
 		fillGap,
 		persistSynthesis,
@@ -35,15 +36,17 @@
 	import ArgumentsPanel from '$lib/discussion/ArgumentsPanel.svelte';
 	import BridgeBar from '$lib/discussion/BridgeBar.svelte';
 	import ClausesPanel from '$lib/discussion/ClausesPanel.svelte';
+	import OpinionForm, { type OpinionSubmit } from '$lib/discussion/OpinionForm.svelte';
 	import IssueHealth from '$lib/discussion/IssueHealth.svelte';
 	import IssueMatrix from '$lib/discussion/IssueMatrix.svelte';
 	import SynthesisPreview from '$lib/discussion/SynthesisPreview.svelte';
-	import { permissionsFor } from '$lib/auth/permissions';
+	import { isAuthor, permissionsFor } from '$lib/auth/permissions';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { page } from '$app/state';
+	import { agreementHref, loginHref, upgradeHref } from '$lib/links';
 	import { ShareButtons } from '@1lev1/svelte-share';
 	import { _ } from 'svelte-i18n';
-	import { t } from '$lib/i18n';
+	import { locale, t } from '$lib/i18n';
 
 	let { data } = $props();
 
@@ -104,12 +107,7 @@
 	let clausesOpinion = $derived(opinions.find((o) => o.id === clausesOpenId) ?? null);
 	let openClauses = $derived(clauses.filter((c) => c.positionId === clausesOpenId));
 	let savingClauseId = $state<string | null>(null);
-	let canEditClauses = $derived(
-		live &&
-			perms.editOwn &&
-			!!clausesOpinion?.authorExternalId &&
-			clausesOpinion.authorExternalId === data.user.id
-	);
+	let canEditClauses = $derived(live && perms.editOwn && isAuthor(clausesOpinion, data.user));
 
 	// Overview: spectrum (default) vs issue matrix
 	let view = $state<'spectrum' | 'matrix'>('spectrum');
@@ -151,12 +149,12 @@
 
 	// Add-opinion flow
 	let pending = $state<InsertMode | null>(null);
-	let heading = $state('');
-	let description = $state('');
 	let fraction = $state(50);
 	let aiNote = $state<string | null>(null);
 	let aiBusy = $state(false);
+	let submitting = $state(false);
 	let submitError = $state<string | null>(null);
+	let submitNotice = $state<string | null>(null);
 
 	let resolvedInsert = $derived<InsertMode | null>(
 		pending && pending.mode === 'between' ? { ...pending, fraction: fraction / 100 } : pending
@@ -165,21 +163,21 @@
 
 	function openForm(mode: InsertMode) {
 		pending = mode;
-		heading = '';
-		description = '';
 		fraction = 50;
 		aiNote = null;
 		submitError = null;
 	}
 
 	function closeForm() {
+		if (submitting) return;
 		pending = null;
 	}
 
-	async function refresh() {
+	async function refresh(): Promise<Opinion[] | null> {
 		const fresh = await loadDiscussion(data.id);
 		if (fresh) localOpinions = fresh.opinions;
 		await loadClauseData();
+		return fresh?.opinions ?? null;
 	}
 
 	function openClausesPanel(id: string) {
@@ -309,62 +307,156 @@
 		}
 	}
 
-	async function submit() {
-		if (!resolvedInsert || !heading.trim()) return;
+	async function addClauseHandler(draft: {
+		issueTitle: string;
+		body: string;
+		stanceValue: number;
+	}): Promise<boolean> {
+		if (!clausesOpinion) return false;
+		const positionId = clausesOpinion.id;
+		try {
+			const existingIssues = await listIssues(data.id).catch(() => issues);
+			const saved = await attachClauses({
+				negotiationId: data.id,
+				positionId,
+				drafts: [{ ...draft, issueId: null, origin: 'human' }],
+				existingIssues,
+				confirm: true
+			});
+			if (saved.length === 0) return false;
+			await loadClauseData();
+			await rederivePosition(positionId);
+			await refresh();
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	async function submit(input: OpinionSubmit) {
+		if (!resolvedInsert || submitting) return;
 		const location = insertLocation(opinions, resolvedInsert);
 		const relativePlacement =
 			resolvedInsert.mode === 'between'
 				? { mode: 'between', fraction: resolvedInsert.fraction ?? 0.5 }
 				: { mode: resolvedInsert.mode };
 
-		if (live) {
-			try {
-				const posId = await createPosition({
-					negotiationId: data.id,
-					heading: heading.trim(),
-					description: description.trim(),
-					location,
-					order: opinions.length + 1,
-					kind: 'proposed_solution',
-					relativePlacement,
-					selfPlacement: Math.round(location)
-				});
-				await refresh();
-				closeForm();
-				if (posId) {
-					decomposeAndPersist({
-						negotiationId: data.id,
-						positionId: posId,
-						topic,
-						opinion: {
-							heading: heading.trim(),
-							description: description.trim(),
-							selfPlacement: Math.round(location)
-						}
-					})
-						.then(refresh)
-						.catch(() => {});
-				}
-			} catch {
-				submitError = t('discussion.submitError');
-			}
-		} else {
-			localOpinions = [
-				...opinions,
-				{
-					id: crypto.randomUUID(),
-					heading: heading.trim(),
-					description: description.trim(),
-					location,
-					votes: 0,
-					color: colorFor(opinions.length),
-					isAnchor: false,
-					pole: 'none',
-					kind: 'proposed_solution'
-				}
-			];
-			closeForm();
+		if (!live) {
+			submitDemo(input, location);
+			return;
 		}
+
+		submitting = true;
+		submitError = null;
+		try {
+			const posId = await createPosition({
+				negotiationId: data.id,
+				heading: input.heading,
+				description: input.description,
+				location,
+				order: opinions.length + 1,
+				kind: 'proposed_solution',
+				relativePlacement,
+				selfPlacement: Math.round(location)
+			});
+			if (!posId) {
+				submitError = t('discussion.submitError');
+				return;
+			}
+
+			let failedClauses = 0;
+			if (input.clauses.length > 0) {
+				// Fresh issue list, so a title another participant just added is reused.
+				const existingIssues = await listIssues(data.id).catch(() => issues);
+				const saved = await attachClauses({
+					negotiationId: data.id,
+					positionId: posId,
+					drafts: input.clauses,
+					existingIssues,
+					confirm: true
+				});
+				failedClauses = input.clauses.length - saved.length;
+				const derived = locationFromClauses(saved);
+				if (derived !== null) {
+					await updatePositionLocation(posId, Math.round(derived)).catch(() => {});
+				}
+			}
+
+			const fresh = await refresh();
+			if (!fresh?.some((o) => o.id === posId)) {
+				submitError = t('opinionForm.notVisible');
+				return;
+			}
+
+			submitting = false;
+			closeForm();
+			if (failedClauses > 0) {
+				submitNotice = t('opinionForm.clausesPartial', { n: failedClauses });
+			}
+			if (input.clauses.length === 0) {
+				// Nothing written by hand — let the AI break it down in the background.
+				decomposeAndPersist({
+					negotiationId: data.id,
+					positionId: posId,
+					topic,
+					opinion: {
+						heading: input.heading,
+						description: input.description,
+						selfPlacement: Math.round(location)
+					}
+				})
+					.then(() => refresh())
+					.catch(() => {});
+			}
+		} catch {
+			submitError = t('discussion.submitError');
+		} finally {
+			submitting = false;
+		}
+	}
+
+	/** Demo mode (no backend): keep the opinion and its clauses in memory. */
+	function submitDemo(input: OpinionSubmit, location: number) {
+		const id = crypto.randomUUID();
+		const nextIssues = [...issues];
+		const newClauses: Clause[] = [];
+		for (const draft of input.clauses) {
+			const title = draft.issueTitle.trim();
+			let issue = title
+				? nextIssues.find((i) => i.title.trim().toLowerCase() === title.toLowerCase())
+				: undefined;
+			if (!issue && title) {
+				issue = { id: crypto.randomUUID(), title, order: nextIssues.length, origin: draft.origin };
+				nextIssues.push(issue);
+			}
+			newClauses.push({
+				id: crypto.randomUUID(),
+				positionId: id,
+				issueId: issue?.id ?? null,
+				body: draft.body,
+				stanceValue: draft.stanceValue,
+				origin: draft.origin,
+				confirmedByAuthor: true
+			});
+		}
+		issues = nextIssues;
+		clauses = [...clauses, ...newClauses];
+		localOpinions = [
+			...opinions,
+			{
+				id,
+				heading: input.heading,
+				description: input.description,
+				location: locationFromClauses(newClauses) ?? location,
+				votes: 0,
+				color: colorFor(opinions.length),
+				isAnchor: false,
+				pole: 'none',
+				kind: 'proposed_solution',
+				selfPlacement: Math.round(location)
+			}
+		];
+		closeForm();
 	}
 
 	function support(id: string) {
@@ -432,7 +524,7 @@
 		}
 	}
 
-	async function askAi() {
+	async function askAi({ heading, description }: { heading: string; description: string }) {
 		if (!resolvedInsert || !heading.trim()) return;
 		aiBusy = true;
 		aiNote = null;
@@ -495,6 +587,15 @@
 			</div>
 		{/if}
 
+		{#if submitNotice}
+			<div
+				class="mt-3 flex items-start justify-between gap-3 rounded-lg border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-100"
+			>
+				<span>{submitNotice}</span>
+				<button type="button" class="text-amber-200/70" onclick={() => (submitNotice = null)}>✕</button>
+			</div>
+		{/if}
+
 		{#if !live}
 			<div class="mt-3 rounded-lg border border-white/15 bg-white/5 p-3 text-sm text-white/50">
 				{$_('discussion.demoMode')}
@@ -519,11 +620,18 @@
 				class="mt-3 rounded-lg border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-100"
 			>
 				{$_('discussion.charterNote')}
-				<a class="underline" href="https://www.1lev1.com/signup">{$_('discussion.createAccount')}</a>.
+				<a class="underline" href={upgradeHref()}>{$_('discussion.createAccount')}</a>.
 			</div>
 		{:else if data.user.type === 'guest'}
 			<div class="mt-3 rounded-lg border border-white/15 bg-white/5 p-3 text-sm text-white/60">
 				{$_('discussion.viewOnly')}
+				<div class="mt-2 flex flex-wrap gap-3">
+					<a
+						class="font-semibold text-violet-200 underline"
+						href={agreementHref(page.url.href, $locale)}>{$_('auth.joinAgreement')}</a
+					>
+					<a class="underline" href={loginHref(page.url.href)}>{$_('auth.login')}</a>
+				</div>
 			</div>
 		{/if}
 	</div>
@@ -592,86 +700,24 @@
 </main>
 
 {#if pending}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-		<div
-			class="w-full max-w-md rounded-2xl border border-white/15 bg-[#15152a] p-6 text-white shadow-2xl"
-		>
-			<h2 class="text-lg font-bold">
-				{pending.mode === 'beyond_top'
-					? $_('discussion.opinionMode.beyond_top')
-					: pending.mode === 'beyond_bottom'
-						? $_('discussion.opinionMode.beyond_bottom')
-						: $_('discussion.opinionMode.between')}
-			</h2>
-
-			<label class="mt-4 block text-sm text-white/70">
-				{$_('discussion.form.title')}
-				<input
-					bind:value={heading}
-					class="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-white"
-					placeholder={$_('discussion.form.titlePlaceholder')}
-				/>
-			</label>
-
-			<label class="mt-3 block text-sm text-white/70">
-				{$_('discussion.form.descPlaceholder')}
-				<textarea
-					bind:value={description}
-					rows="2"
-					class="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-white"
-				></textarea>
-			</label>
-
-			{#if pending.mode === 'between'}
-				<label class="mt-3 block text-sm text-white/70">
-					{$_('discussion.form.placement', { values: { fraction } })}
-					<input type="range" min="5" max="95" bind:value={fraction} class="mt-1 w-full" />
-				</label>
-			{/if}
-
-			{#if aiNote}
-				<p
-					class="mt-3 rounded-lg border border-violet-400/30 bg-violet-500/10 p-3 text-sm text-violet-100"
-				>
-					{$_('discussion.form.aiNote')} {aiNote}
-				</p>
-			{/if}
-
-			{#if submitError}
-				<p class="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">
-					{submitError}
-				</p>
-			{/if}
-
-			<div class="mt-5 flex items-center justify-between gap-2">
-				<button
-					type="button"
-					onclick={askAi}
-					disabled={aiBusy || !heading.trim()}
-					class="rounded-lg border border-violet-400/40 px-3 py-2 text-sm text-violet-100 hover:bg-violet-500/20 disabled:opacity-40"
-				>
-					{aiBusy ? $_('discussion.form.aiCheck') : $_('discussion.form.askAI')}
-				</button>
-				<div class="flex gap-2">
-					<button
-						type="button"
-						onclick={closeForm}
-						class="rounded-lg px-3 py-2 text-sm text-white/60"
-					>
-						{$_('discussion.form.cancel')}
-					</button>
-					<button
-						type="button"
-						onclick={submit}
-						disabled={!heading.trim()}
-						class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
-					>
-						{$_('discussion.form.add')}
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
+	<OpinionForm
+		title={pending.mode === 'beyond_top'
+			? $_('discussion.opinionMode.beyond_top')
+			: pending.mode === 'beyond_bottom'
+				? $_('discussion.opinionMode.beyond_bottom')
+				: $_('discussion.opinionMode.between')}
+		{topic}
+		{issues}
+		bind:fraction
+		showPlacement={pending.mode === 'between'}
+		busy={submitting}
+		error={submitError}
+		placementNote={aiNote}
+		placementBusy={aiBusy}
+		onaskplacement={askAi}
+		onsubmit={submit}
+		oncancel={closeForm}
+	/>
 {/if}
 
 {#if openId && openOpinion}
@@ -701,6 +747,7 @@
 		{savingClauseId}
 		onfill={fillGapClause}
 		onaddmanual={addManualClause}
+		onaddclause={addClauseHandler}
 		onupdate={updateClauseHandler}
 		onconfirm={confirmClauseHandler}
 		onclose={closeClausesPanel}

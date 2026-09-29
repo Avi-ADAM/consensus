@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { loginHref } from '$lib/links';
 	import PlacePicker from '$lib/discussion/PlacePicker.svelte';
 	import { createDiscussion, type OpinionInput } from '$lib/discussion/api';
 	import { decomposeAndPersist } from '$lib/discussion/decompose';
@@ -36,6 +38,16 @@
 			places = out.places ?? [];
 		} catch {
 			places = [];
+		}
+		// A local discussion is most often about where the creator lives:
+		// preselect their own countries (still editable).
+		try {
+			const res = await fetch('/api/my-places');
+			const mine: string[] = res.ok ? ((await res.json()).placeIds ?? []) : [];
+			const known = mine.filter((id) => places.some((p) => p.id === id));
+			if (placeIds.length === 0 && known.length > 0) placeIds = known;
+		} catch {
+			// no preselection
 		}
 	});
 
@@ -120,7 +132,7 @@
 				class="mt-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-5 text-center text-sm text-amber-100"
 			>
 				{t('new.locked')}
-				<a class="underline" href="https://www.1lev1.com/login">{t('new.lockedCta')}</a>
+				<a class="underline" href={loginHref(page.url.href)}>{t('new.lockedCta')}</a>
 			</div>
 		{:else}
 			<p class="mx-auto mt-3 max-w-md text-center text-sm text-white/60">{t('new.intro')}</p>

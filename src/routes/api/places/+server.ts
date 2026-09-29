@@ -1,68 +1,17 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { STRAPI_URL } from '$env/static/private';
-import { env } from '$env/dynamic/private';
-
-interface Place {
-	id: string;
-	name: string;
-}
-
-const empty = () => json({ places: [] as Place[] });
+import { MAIN_APP_URL, PROXY_SHARED_SECRET } from '$env/static/private';
+import { listPlaces } from '$lib/server/places';
 
 /**
- * List places (currently countries). The `cuntries` collection is a public,
- * unauthenticated GraphQL query in the shared Strapi — the same one the main
- * app's `love` page reads — so we query it directly. Degrades to an empty list
- * when env.STRAPI_URL is unset or the query fails, keeping the create form usable.
- *
- * Failures are logged server-side only: the response never carries the backend
- * URL, status text or error string, since that is internal infrastructure detail.
- *
- * The nginx in front of the shared Strapi answers 403 to any request without the
- * `x-strapi-gate` secret while the gate is closed (`strapi-gate close` on the VPS),
- * so the secret is sent on every call. It must equal the main app's STRAPI_GATE_KEY.
+ * List places (currently countries) for the create form and the local map.
+ * Goes through the main app's `/api/send` like every other backend call; this
+ * site never talks to Strapi directly.
  */
 export const GET: RequestHandler = async ({ fetch }) => {
-	if (!STRAPI_URL) {
-		console.error('[places] STRAPI_URL is not configured');
-		return empty();
-	}
-
-	const gateKey = env.STRAPI_GATE_KEY?.trim();
-	if (!gateKey) console.error('[places] STRAPI_GATE_KEY is not configured — a closed gate will 403');
-
-	const targetUrl = `${STRAPI_URL.replace(/\/$/, '')}/graphql`;
-
-	try {
-		const res = await fetch(targetUrl, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				...(gateKey ? { 'x-strapi-gate': gateKey } : {})
-			},
-			body: JSON.stringify({
-				query: `query { cuntries(pagination: { limit: -1 }) { data { id attributes { name } } } }`
-			}),
-			signal: AbortSignal.timeout(10_000)
-		});
-
-		if (!res.ok) {
-			console.error(`[places] non-ok response (${res.status}):`, (await res.text()).slice(0, 300));
-			return empty();
-		}
-
-		const data = await res.json();
-		if (data?.errors) console.error('[places] graphql errors:', JSON.stringify(data.errors));
-
-		const places: Place[] = (data?.data?.cuntries?.data ?? []).map(
-			(c: { id: string | number; attributes?: { name?: string } }) => ({
-				id: String(c.id),
-				name: c.attributes?.name ?? ''
-			})
-		);
-		return json({ places });
-	} catch (e) {
-		console.error('[places] fetch failed:', e);
-		return empty();
-	}
+	const places = await listPlaces({
+		mainAppUrl: MAIN_APP_URL,
+		secret: PROXY_SHARED_SECRET,
+		fetch
+	});
+	return json({ places });
 };

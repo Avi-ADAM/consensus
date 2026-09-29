@@ -1,8 +1,8 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { GROQ_API_KEY } from '$env/static/private';
+import { groqModelParams } from '$lib/server/groq';
 
 const GROQ_API = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
 
 interface SuggestBody {
 	topic?: string;
@@ -20,7 +20,7 @@ async function callGroq(system: string, user: string): Promise<Record<string, un
 			Authorization: `Bearer ${GROQ_API_KEY}`
 		},
 		body: JSON.stringify({
-			model: MODEL,
+			...groqModelParams(),
 			temperature: 0.4,
 			max_tokens: 400,
 			response_format: { type: 'json_object' },

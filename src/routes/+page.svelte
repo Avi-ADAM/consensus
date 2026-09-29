@@ -1,8 +1,14 @@
 <script>
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
+	import UserMenu from '$lib/components/UserMenu.svelte';
+	import { AGREEMENT_SITE, MAIN_SITE, agreementHref } from '$lib/links';
+
 	import { _ } from 'svelte-i18n';
 	import { locale } from '$lib/i18n';
 	import DiscussionDemo from '$lib/discussion/DiscussionDemo.svelte';
+
+	let { data } = $props();
 
 	let heroVisible = $state(false);
 
@@ -118,9 +124,9 @@
         </a>
         <div class="nav-links">
           <a href="/negotiation/local">{$_('nav.map')}</a>
-          <a href="https://www.1lev1.com" target="_blank" rel="noopener noreferrer">{$_('nav.mainSite')}</a>
-          <a href="https://www.1lev1.com/login?from=https://consensus.1lev1.com" class="nav-login">{$_('nav.login')}</a>
-          <a href="https://www.1lev1.com/signup" class="nav-cta">{$_('nav.join')}</a>
+          <a href={AGREEMENT_SITE} target="_blank" rel="noopener noreferrer">{$_('nav.agreement')}</a>
+          <a href={MAIN_SITE} target="_blank" rel="noopener noreferrer">{$_('nav.mainSite')}</a>
+          <UserMenu user={data.user} />
         </div>
       </div>
     </nav>
@@ -260,6 +266,34 @@
     </div>
   </section>
 
+  <!-- ═══════════════════ AGREEMENT ═══════════════════ -->
+  <!-- The agreement (consent, no coercion) is the one thing a participant has
+       to bring. Signing it is what opens this platform to them. -->
+  <section class="agreement" id="agreement">
+    <div class="section-inner">
+      <div class="agreement-card" use:reveal>
+        <span class="section-tag">{$_('home.agreement.tag')}</span>
+        <h2>{$_('home.agreement.title')}</h2>
+        <p>{$_('home.agreement.body')}</p>
+        <ul class="agreement-points">
+          <li>{$_('home.agreement.point1')}</li>
+          <li>{$_('home.agreement.point2')}</li>
+          <li>{$_('home.agreement.point3')}</li>
+        </ul>
+        <div class="agreement-actions">
+          {#if data.user.type === 'guest'}
+            <a href={agreementHref(page.url.href, $locale)} class="btn-primary">{$_('home.agreement.sign')}</a>
+          {:else}
+            <span class="agreement-done">✓ {$_('auth.signedAgreement')}</span>
+          {/if}
+          <a href={AGREEMENT_SITE} target="_blank" rel="noopener noreferrer" class="btn-ghost">
+            {$_('home.agreement.read')}
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ═══════════════════ CTA ═══════════════════ -->
   <section class="cta-section">
     <div class="cta-bg">
@@ -270,7 +304,11 @@
         <h2>{$_('home.cta.ready')}</h2>
         <p>{$_('home.cta.subtitle')}</p>
         <div class="cta-actions">
-          <a href="https://www.1lev1.com/signup" class="btn-primary large">{$_('home.cta.join')}</a>
+          {#if data.user.type === 'guest'}
+            <a href={agreementHref(page.url.href, $locale)} class="btn-primary large">{$_('home.cta.join')}</a>
+          {:else}
+            <a href="/negotiation/new" class="btn-primary large">{$_('home.startDiscussion')}</a>
+          {/if}
           <a href="/negotiation/local" class="btn-ghost large">
             {$_('home.cta.nearby')}
           </a>
@@ -417,31 +455,6 @@
   }
 
   .nav-links a:hover { color: #f0f0f8; }
-
-  .nav-login {
-    background: transparent;
-    border: 1px solid #4a4a6a;
-    padding: 0.5rem 1.2rem;
-    border-radius: 8px;
-    transition: border-color 0.2s !important;
-  }
-
-  .nav-login:hover { border-color: #7c3aed !important; }
-
-  .nav-cta {
-    background: linear-gradient(135deg, #7c3aed, #4f46e5) !important;
-    color: white !important;
-    padding: 0.55rem 1.4rem;
-    border-radius: 8px;
-    font-weight: 600;
-    box-shadow: 0 4px 24px #7c3aed44;
-    transition: transform 0.2s, box-shadow 0.2s !important;
-  }
-
-  .nav-cta:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 32px #7c3aed66 !important;
-  }
 
   /* HERO CONTENT */
   .hero-content {
@@ -991,6 +1004,82 @@
     animation: pulse 2s ease-in-out infinite;
   }
 
+  /* ══════════════ AGREEMENT ══════════════ */
+  .agreement {
+    padding: 2rem 0 4rem;
+    background: #09090f;
+    position: relative;
+    z-index: 2;
+  }
+
+  .agreement-card {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.5rem;
+    border-radius: 24px;
+    border: 1px solid #f59e0b33;
+    background: linear-gradient(160deg, #f59e0b0d, #7c3aed0d);
+    text-align: center;
+  }
+
+  .agreement-card .section-tag {
+    color: #fbbf24;
+    background: #f59e0b15;
+    border-color: #f59e0b33;
+  }
+
+  .agreement-card h2 {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+    font-weight: 900;
+    color: #f0f0f8;
+    margin-bottom: 0.9rem;
+  }
+
+  .agreement-card > p {
+    font-family: 'Sora', sans-serif;
+    color: #a0a0c0;
+    line-height: 1.8;
+    margin-bottom: 1.25rem;
+  }
+
+  .agreement-points {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto 1.75rem;
+    display: grid;
+    gap: 0.5rem;
+    max-width: 560px;
+    text-align: start;
+    font-family: 'Sora', sans-serif;
+    color: #d0d0e8;
+    font-size: 0.95rem;
+  }
+
+  .agreement-points li::before {
+    content: '✓';
+    color: #fbbf24;
+    margin-inline-end: 0.6rem;
+  }
+
+  .agreement-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .agreement-done {
+    font-family: 'Sora', sans-serif;
+    color: #fbbf24;
+    font-weight: 600;
+  }
+
+  @media (max-width: 640px) {
+    .agreement-card { padding: 1.75rem 1.25rem; }
+  }
+
   /* ══════════════ CTA ══════════════ */
   .cta-section {
     padding: 8rem 0;
@@ -1071,7 +1160,8 @@
     .steps { grid-template-columns: 1fr; }
     .hero-stats { flex-wrap: wrap; gap: 1rem; }
     .stat-divider { display: none; }
-    .nav-links a:not(.nav-cta):not(.nav-login) { display: none; }
+    /* Keep only the account controls (UserMenu) on narrow screens. */
+    .nav-links > a { display: none; }
     .nav-inner { padding: 0 1rem; gap: 0.75rem; }
     .nav-links { gap: 0.6rem; }
     .cta-actions { flex-direction: column; align-items: center; }

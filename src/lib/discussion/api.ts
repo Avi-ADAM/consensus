@@ -98,6 +98,16 @@ function attr(node: any) {
 	return node?.attributes ?? {};
 }
 
+/**
+ * Every consensus content type (Negotiation, Position, Argument, Issue, Clause)
+ * has draft & publish enabled in Strapi, and a GraphQL create without
+ * `publishedAt` stores a draft — which no list or nested relation returns. So
+ * the write looks successful and the item never shows up. Stamp every create.
+ */
+function publishedNow(): { publishedAt: string } {
+	return { publishedAt: new Date().toISOString() };
+}
+
 function parseJson<T>(value: unknown, fallback: T): T {
 	if (typeof value !== 'string') return (value as T) ?? fallback;
 	try {
@@ -120,7 +130,9 @@ function toOpinion(node: any, index: number): Opinion {
 		pole: (a.pole as Pole) ?? 'none',
 		kind: (a.kind as OpinionKind) ?? 'opinion',
 		selfPlacement: typeof a.selfPlacement === 'number' ? a.selfPlacement : undefined,
-		authorExternalId: a.authorExternalId ? String(a.authorExternalId) : undefined
+		authorExternalId: a.authorExternalId ? String(a.authorExternalId) : undefined,
+		authorUserId: a.author?.data?.id ? String(a.author.data.id) : undefined,
+		authorUserEmail: attr(a.author?.data).email ? String(attr(a.author.data).email) : undefined
 	};
 }
 
@@ -217,6 +229,7 @@ export async function createDiscussion(
 			shareToken,
 			isLocal: input.isLocal,
 			placeIds: input.placeIds.map((p) => Number(p)),
+			...publishedNow(),
 			...(input.sourceType && input.sourceId
 				? {
 						sourceType: input.sourceType,
@@ -263,7 +276,7 @@ export async function createPosition(
 	fetch: FetchLike = globalThis.fetch
 ): Promise<string | null> {
 	const created = await sendToSer<any>(
-		{ ...input, isAnchor: false, pole: 'none' },
+		{ ...input, isAnchor: false, pole: 'none', ...publishedNow() },
 		'41CreatePosition',
 		0,
 		0,
@@ -336,7 +349,7 @@ export async function createArgument(
 	input: CreateArgumentInput,
 	fetch: FetchLike = globalThis.fetch
 ): Promise<void> {
-	await sendToSer({ ...input }, 'CreateArgument', 0, 0, false, fetch);
+	await sendToSer({ ...input, ...publishedNow() }, 'CreateArgument', 0, 0, false, fetch);
 }
 
 export async function supportArgument(
@@ -396,7 +409,14 @@ export async function createIssue(
 	input: { negotiationId: string; title: string; order: number; origin: Origin },
 	fetch: FetchLike = globalThis.fetch
 ): Promise<string | null> {
-	const res = await sendToSer<any>({ ...input }, 'CreateIssue', 0, 0, false, fetch);
+	const res = await sendToSer<any>(
+		{ ...input, ...publishedNow() },
+		'CreateIssue',
+		0,
+		0,
+		false,
+		fetch
+	);
 	const id = res?.data?.createIssue?.data?.id ?? res?.id;
 	return id ? String(id) : null;
 }
@@ -412,7 +432,14 @@ export async function createClause(
 	},
 	fetch: FetchLike = globalThis.fetch
 ): Promise<string | null> {
-	const res = await sendToSer<any>({ ...input }, 'CreateClause', 0, 0, false, fetch);
+	const res = await sendToSer<any>(
+		{ ...input, ...publishedNow() },
+		'CreateClause',
+		0,
+		0,
+		false,
+		fetch
+	);
 	const id = res?.data?.createClause?.data?.id ?? res?.id;
 	return id ? String(id) : null;
 }

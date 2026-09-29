@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { loginHref } from '$lib/links';
 	import {
 		createDiscussion,
 		createIssue,
@@ -134,7 +136,7 @@
 				class="mt-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-5 text-center text-sm text-amber-100"
 			>
 				{$_('bridge.locked')}
-				<a class="underline" href="https://www.1lev1.com/login">{$_('bridge.lockedCta')}</a>
+				<a class="underline" href={loginHref(page.url.href)}>{$_('bridge.lockedCta')}</a>
 			</div>
 		{:else}
 			<p class="mx-auto mt-3 max-w-md text-center text-sm text-white/60">{$_('bridge.intro')}</p>

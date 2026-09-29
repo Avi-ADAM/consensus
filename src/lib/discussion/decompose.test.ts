@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+	attachClauses,
 	decomposeOpinion,
 	decomposeAndPersist,
 	fillGap,
@@ -79,6 +80,7 @@ function defaultSend(existingIssues: Issue[] = []) {
 			case '41CreatePosition':
 				return { data: { createPosition: { data: { id: `pos-${++positionSeq}` } } } };
 			case '42UpdatePosition':
+			case 'UpdateClause':
 				return {};
 			default:
 				return {};
@@ -376,5 +378,69 @@ describe('persistSynthesis', () => {
 			fetch
 		);
 		expect(positionId).toBeNull();
+	});
+});
+
+describe('attachClauses', () => {
+	const existing: Issue[] = [{ id: 'iB', title: 'Budget', order: 0, origin: 'ai' }];
+
+	it('matches issues by title ignoring case, creates new ones once, and skips empty bodies', async () => {
+		const { fetch, sendCalls } = makeFetch({ send: defaultSend(existing) });
+		const saved = await attachClauses(
+			{
+				negotiationId: 'n1',
+				positionId: 'p1',
+				existingIssues: existing,
+				drafts: [
+					{ body: 'a', issueId: null, issueTitle: ' budget ', stanceValue: 30, origin: 'human' },
+					{ body: 'b', issueId: null, issueTitle: 'Who decides', stanceValue: 70, origin: 'human' },
+					{ body: 'c', issueId: null, issueTitle: 'who decides', stanceValue: 90, origin: 'human' },
+					{ body: '  ', issueId: null, issueTitle: 'Ignored', stanceValue: 50, origin: 'human' },
+					{ body: 'd', issueId: null, issueTitle: '', stanceValue: 10, origin: 'human' }
+				]
+			},
+			fetch
+		);
+
+		const issueCalls = sendCalls.filter((c) => c.queId === 'CreateIssue');
+		expect(issueCalls).toHaveLength(1);
+		expect(issueCalls[0].arg).toMatchObject({ title: 'Who decides', order: 1, origin: 'human' });
+		expect(saved.map((c) => c.issueId)).toEqual(['iB', 'new-issue-1', 'new-issue-1', null]);
+		expect(saved.every((c) => c.origin === 'human' && !c.confirmedByAuthor)).toBe(true);
+	});
+
+	it('confirms the clauses when asked', async () => {
+		const { fetch, sendCalls } = makeFetch({ send: defaultSend(existing) });
+		const saved = await attachClauses(
+			{
+				negotiationId: 'n1',
+				positionId: 'p1',
+				existingIssues: existing,
+				drafts: [{ body: 'a', issueId: 'iB', issueTitle: '', stanceValue: 30, origin: 'ai' }],
+				confirm: true
+			},
+			fetch
+		);
+		expect(sendCalls.find((c) => c.queId === 'UpdateClause')?.arg).toEqual({
+			id: 'clause-1',
+			confirmedByAuthor: true
+		});
+		expect(saved[0]).toMatchObject({ issueId: 'iB', confirmedByAuthor: true });
+	});
+
+	it('publishes every created issue and clause', async () => {
+		const { fetch, sendCalls } = makeFetch({ send: defaultSend([]) });
+		await attachClauses(
+			{
+				negotiationId: 'n1',
+				positionId: 'p1',
+				existingIssues: [],
+				drafts: [{ body: 'a', issueId: null, issueTitle: 'New', stanceValue: 30, origin: 'human' }]
+			},
+			fetch
+		);
+		const creates = sendCalls.filter((c) => c.queId.startsWith('Create'));
+		expect(creates).toHaveLength(2);
+		for (const c of creates) expect(typeof c.arg.publishedAt).toBe('string');
 	});
 });

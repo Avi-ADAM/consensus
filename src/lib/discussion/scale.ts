@@ -16,6 +16,14 @@ export interface Opinion {
 	selfPlacement?: number;
 	/** External id of the author, for ownership checks (clause editing). */
 	authorExternalId?: string;
+	/**
+	 * The Strapi user the opinion is linked to through its `author` relation.
+	 * Registered authors get both this and `authorExternalId`; an author set
+	 * by hand in Strapi usually only gets the relation.
+	 */
+	authorUserId?: string;
+	/** Email of that linked user — the fallback when the query carries no id. */
+	authorUserEmail?: string;
 }
 
 export type InsertMode =

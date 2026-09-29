@@ -2,6 +2,14 @@ import { error, type RequestHandler } from '@sveltejs/kit';
 import { MAIN_APP_URL, PROXY_SHARED_SECRET } from '$env/static/private';
 import { authorizeSend } from '$lib/server/sendPolicy';
 
+/** Creates that record who wrote them. */
+const AUTHORED_QIDS: ReadonlySet<string> = new Set([
+	'41CreatePosition',
+	'CreateArgument',
+	'CreateClause'
+]);
+const AUTHOR_FIELDS = ['authorExternalId', 'authorType', 'authorEmail', 'authorName'] as const;
+
 interface SendBody {
 	data?: { queId?: string; arg?: Record<string, unknown> };
 }
@@ -10,8 +18,8 @@ interface SendBody {
  * Thin proxy to the main 1lev1 app's `/api/send` GraphQL gateway.
  *
  * We deliberately do NOT re-implement the query map (qids) or talk to Strapi
- * directly here. The main repo owns that logic and will eventually share a host
- * with Strapi (internal traffic). We forward the body and the SSO cookies
+ * directly here. The main repo owns that logic, and its API host
+ * (api.1lev1.com) sits next to Strapi. We forward the body and the SSO cookies
  * (`jwt`, `id`, ...) so the main server authenticates registered users as today.
  *
  * For charter/guest users (no `jwt`) we set `isSer: true` so the main server
@@ -47,6 +55,18 @@ export const POST: RequestHandler = async ({ request, fetch, locals }) => {
 	}
 
 	const arg: Record<string, unknown> = { ...(body.data?.arg ?? {}) };
+	// Author fields are never taken from the client.
+	for (const key of AUTHOR_FIELDS) delete arg[key];
+	if (!decision.useService && AUTHORED_QIDS.has(queId) && locals.user.id) {
+		// The main server fills author fields from `__identity` only on the
+		// service path; on the JWT path it stores none, so a registered user's
+		// opinion had no owner and its clauses could never be edited. Stamp the
+		// identity we resolved from the SSO cookies instead.
+		arg.authorExternalId = locals.user.id;
+		arg.authorType = locals.user.type;
+		if (locals.user.email) arg.authorEmail = locals.user.email;
+		if (locals.user.name) arg.authorName = locals.user.name;
+	}
 	if (decision.useService) {
 		arg.__identity = {
 			externalId: locals.user.id,

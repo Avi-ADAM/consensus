@@ -14,7 +14,8 @@
     "map": "Discussion Map",
     "login": "Login",
     "join": "Join",
-    "mainSite": "Main site"
+    "mainSite": "Main site",
+    "agreement": "The Agreement"
   },
   "lang": {
     "he": "עברית",
@@ -117,6 +118,16 @@
         "value": "0",
         "label": "vetoes — no one-sided rejection"
       }
+    },
+    "agreement": {
+      "tag": "The foundation",
+      "title": "Agree on the agreement — everything else opens up",
+      "body": "You do not need an account to take part. Signing the agreement is enough: to act by consent, in freedom and without coercion. Whoever signs it gets this platform as a way to settle disagreements — by agreement.",
+      "point1": "One signature on the agreement site identifies you here",
+      "point2": "Signatories propose opinions, argue and vote",
+      "point3": "A full 1💗1 account adds opening discussions and a lasting identity on every browser",
+      "sign": "Sign the Agreement",
+      "read": "Read the Agreement"
     }
   },
   "footer": {
@@ -235,6 +246,41 @@
       "add": "Add"
     }
   },
+  "opinionForm": {
+    "close": "Close",
+    "stepOpinion": "1 · The position",
+    "stepClauses": "2 · Its clauses",
+    "titleLabel": "The position in one sentence",
+    "titlePlaceholder": "e.g. Extend evening opening hours",
+    "descLabel": "Explanation (optional, helps the AI break it down)",
+    "descPlaceholder": "Why, how, and on what terms…",
+    "placementCheck": "AI feedback on the placement",
+    "clausesSub": "Break the position into clauses — each clause answers one aspect of the topic (budget, timeline, who decides…). Write them yourself, let the AI break it down, or mix and edit.",
+    "addClause": "+ Add clause",
+    "aiDecompose": "✨ Break into clauses with AI",
+    "aiRedo": "✨ Break down again with AI",
+    "aiDecomposing": "Breaking down…",
+    "aiNeedsText": "Write the position first, then the AI can break it down",
+    "aiUnavailable": "The AI is unavailable right now — you can add clauses manually.",
+    "aiEmpty": "The AI found no clauses. Expand the explanation, or add them manually.",
+    "clauseN": "Clause {n}",
+    "originAI": "AI suggestion",
+    "remove": "Remove",
+    "issueLabel": "Aspect",
+    "issuePlaceholder": "Pick an existing aspect or type a new one",
+    "newIssue": "new aspect",
+    "bodyLabel": "Clause",
+    "bodyPlaceholder": "What does the position say on this aspect?",
+    "stance": "Stance on the aspect's axis — {value}",
+    "noClauses": "No clauses yet. Add one manually or ask the AI to break the position down.",
+    "gapsTitle": "Aspects other positions addressed — add a clause on them too?",
+    "clauseCount": "{n} clauses will be saved with the position",
+    "autoHint": "No clauses — we'll try to break it down automatically after saving",
+    "saving": "Saving…",
+    "submit": "Add position",
+    "notVisible": "The position was sent but did not appear after refreshing. Reload the page and try again.",
+    "clausesPartial": "The position was saved, but {n} of its clauses were not. You can add them from the clauses window."
+  },
   "local": {
     "title": "Local Discussions",
     "newDiscussion": "New Discussion",
@@ -247,7 +293,9 @@
     "emptyYet": "yet.",
     "firstDiscussion": "Be the first to start a discussion here.",
     "participants": "participants",
-    "round": "Round"
+    "round": "Round",
+    "myPlaces": "My places",
+    "myPlacesHint": "From the agreement you signed and your account"
   },
   "arguments": {
     "close": "Close",
@@ -283,7 +331,11 @@
     "filling": "Filling…",
     "fillAI": "Fill with AI",
     "clausePlaceholder": "Formulate the clause…",
-    "empty": "No clauses yet for this position."
+    "empty": "No clauses yet for this position.",
+    "addClause": "+ Add clause",
+    "addClauseTitle": "New clause",
+    "addingClause": "Adding…",
+    "addClauseError": "The clause was not saved. Try again."
   },
   "synthesis": {
     "ariaLabel": "Proposed middle formula",
@@ -353,5 +405,24 @@
     "genericTitle": "Something went wrong",
     "genericBody": "The error was logged on our side. Try refreshing, and if it keeps happening head back to the home page.",
     "home": "Home page"
+  },
+  "auth": {
+    "login": "Log in",
+    "joinAgreement": "Join the Agreement",
+    "joinAgreementHint": "Signing the agreement — acting by consent, without coercion — is all it takes to take part",
+    "signedAgreement": "Signed the Agreement",
+    "loggedInAs": "Logged in as {name}",
+    "account": "My 1💗1 account",
+    "logout": "Log out",
+    "upgrade": "Create a full account",
+    "upgradeHint": "An account keeps your identity on every browser and lets you open new discussions.",
+    "haveAccount": "I already have an account — log in",
+    "charterHint": "You signed the agreement, so you can propose opinions, argue and vote in discussions.",
+    "menu": "User menu"
+  },
+  "header": {
+    "back": "Back",
+    "home": "Home",
+    "breadcrumb": "Breadcrumb"
   }
 }

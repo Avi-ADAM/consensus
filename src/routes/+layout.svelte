@@ -3,8 +3,13 @@
 	import { browser } from '$app/environment';
 	import { locale, setLocale, isRTL, type Locale, SUPPORTED_LOCALES } from '$lib/i18n';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
+	import SiteHeader from '$lib/components/SiteHeader.svelte';
+	import { page } from '$app/state';
 
-	let { children } = $props();
+	let { children, data } = $props();
+
+	// The home page carries its own hero nav; every other page gets the header.
+	let showHeader = $derived(page.route.id !== '/' && page.route.id !== null);
 
 	const langLabels: Record<Locale, string> = { he: 'עברית', ar: 'العربية', en: 'English' };
 
@@ -36,6 +41,9 @@
 </svelte:head>
 
 <div {lang} {dir} style="min-height:100vh">
+	{#if showHeader}
+		<SiteHeader user={data.user} />
+	{/if}
 	{@render children()}
 </div>
 

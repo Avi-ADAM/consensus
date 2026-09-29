@@ -9,6 +9,8 @@
 	let canCreate = $derived(data.user.type === 'registered');
 
 	let places = $state<{ id: string; name: string }[]>([]);
+	/** The visitor's own countries (account + signed agreement), in their order. */
+	let myPlaceIds = $state<string[]>([]);
 	let query = $state('');
 	let selectedPlaceId = $state<string | null>(null);
 	let discussions = $state<DiscussionSummary[]>([]);
@@ -20,15 +22,32 @@
 			: places
 	);
 	let selectedPlace = $derived(places.find((p) => p.id === selectedPlaceId) ?? null);
+	let myPlaces = $derived(
+		myPlaceIds
+			.map((id) => places.find((p) => p.id === id))
+			.filter((p): p is { id: string; name: string } => !!p)
+	);
+
+	async function getJson<T>(url: string, fallback: T): Promise<T> {
+		try {
+			const res = await fetch(url);
+			return res.ok ? ((await res.json()) as T) : fallback;
+		} catch {
+			return fallback;
+		}
+	}
 
 	onMount(async () => {
-		try {
-			const res = await fetch('/api/places');
-			const out = await res.json();
-			places = out.places ?? [];
-		} catch {
-			places = [];
-		}
+		const [all, mine] = await Promise.all([
+			getJson<{ places?: { id: string; name: string }[] }>('/api/places', {}),
+			data.user.type === 'guest'
+				? Promise.resolve({ placeIds: [] as string[] })
+				: getJson<{ placeIds?: string[] }>('/api/my-places', {})
+		]);
+		places = all.places ?? [];
+		myPlaceIds = mine.placeIds ?? [];
+		// Open on the visitor's own country rather than on an empty page.
+		if (!selectedPlaceId && myPlaces.length > 0) selectPlace(myPlaces[0].id);
 	});
 
 	async function selectPlace(id: string) {
@@ -64,6 +83,29 @@
 		{#if places.length === 0}
 			<p class="mt-6 text-sm text-white/50">{$_('local.noPlaces')}</p>
 		{:else}
+			{#if myPlaces.length > 0}
+				<section class="mt-6" aria-labelledby="my-places-title">
+					<h2 id="my-places-title" class="text-sm font-semibold text-amber-200/90">
+						{$_('local.myPlaces')}
+					</h2>
+					<p class="mt-0.5 text-xs text-white/45">{$_('local.myPlacesHint')}</p>
+					<div class="mt-2 flex flex-wrap gap-2">
+						{#each myPlaces as place (place.id)}
+							<button
+								type="button"
+								onclick={() => selectPlace(place.id)}
+								aria-pressed={selectedPlaceId === place.id}
+								class="rounded-full border px-3 py-1 text-sm font-medium transition-colors {selectedPlaceId ===
+								place.id
+									? 'border-amber-300 bg-amber-500 text-black'
+									: 'border-amber-400/50 text-amber-100 hover:border-amber-300'}"
+							>
+								📍 {place.name}
+							</button>
+						{/each}
+					</div>
+				</section>
+			{/if}
 			<input
 				bind:value={query}
 				placeholder={$_('local.searchPlaceholder')}
