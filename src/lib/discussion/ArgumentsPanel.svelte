@@ -8,7 +8,8 @@
 		loading?: boolean;
 		canAdd?: boolean;
 		canVote?: boolean;
-		oncreate?: (stance: Stance, body: string) => void;
+		/** Resolves false when the argument was not saved. */
+		oncreate?: (stance: Stance, body: string) => Promise<boolean>;
 		onsupport?: (id: string) => void;
 		onclose?: () => void;
 	}
@@ -19,21 +20,28 @@
 		loading = false,
 		canAdd = false,
 		canVote = false,
-		oncreate = () => {},
+		oncreate = async () => true,
 		onsupport = () => {},
 		onclose = () => {}
 	}: Props = $props();
 
 	let draft = $state('');
+	let saving = $state(false);
+	let failed = $state(false);
 
 	let pros = $derived(args.filter((a) => a.stance === 'pro').sort((a, b) => b.votes - a.votes));
 	let cons = $derived(args.filter((a) => a.stance === 'con').sort((a, b) => b.votes - a.votes));
 
-	function add(stance: Stance) {
+	async function add(stance: Stance) {
 		const body = draft.trim();
-		if (!body) return;
-		oncreate(stance, body);
-		draft = '';
+		if (!body || saving) return;
+		saving = true;
+		failed = false;
+		const ok = await oncreate(stance, body).catch(() => false);
+		saving = false;
+		// Keep the draft on failure so nothing typed is lost.
+		if (ok) draft = '';
+		else failed = true;
 	}
 </script>
 
@@ -114,18 +122,21 @@
 						placeholder={$_('arguments.placeholder')}
 						class="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
 					></textarea>
+					{#if failed}
+						<p class="mt-2 text-xs text-red-300">{$_('arguments.saveError')}</p>
+					{/if}
 					<div class="mt-2 flex gap-2">
 						<button
 							type="button"
 							onclick={() => add('pro')}
-							disabled={!draft.trim()}
+							disabled={!draft.trim() || saving}
 							class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40"
 							>{$_('arguments.addPro')}</button
 						>
 						<button
 							type="button"
 							onclick={() => add('con')}
-							disabled={!draft.trim()}
+							disabled={!draft.trim() || saving}
 							class="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-40"
 							>{$_('arguments.addCon')}</button
 						>

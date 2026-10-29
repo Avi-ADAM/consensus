@@ -490,15 +490,16 @@
 		openId = null;
 	}
 
-	async function createArg(stance: Stance, body: string) {
-		if (!openId) return;
+	/** Resolves false when the argument was not saved, so the panel keeps the draft. */
+	async function createArg(stance: Stance, body: string): Promise<boolean> {
+		if (!openId) return false;
 		if (live) {
-			try {
-				await createArgument({ negotiationId: data.id, positionId: openId, stance, body });
-				args = await listArguments(openId);
-			} catch {
-				/* keep panel open */
-			}
+			const positionId = openId;
+			const id = await createArgument({ negotiationId: data.id, positionId, stance, body }).catch(
+				() => null
+			);
+			if (!id) return false;
+			args = await listArguments(positionId).catch(() => args);
 		} else {
 			const next = [
 				...(demoArgs[openId] ?? []),
@@ -507,6 +508,7 @@
 			demoArgs = { ...demoArgs, [openId]: next };
 			args = next;
 		}
+		return true;
 	}
 
 	function supportArg(id: string) {
@@ -559,7 +561,9 @@
 
 <main class="min-h-screen bg-[#09090f] px-4 py-8 text-white">
 	<div class="mx-auto max-w-3xl">
-		<p class="text-sm text-white/40">{$_('discussion.discussionId', { values: { id: data.id } })}</p>
+		<p class="text-sm text-white/40">
+			{$_('discussion.discussionId', { values: { id: data.id } })}
+		</p>
 		<h1 class="mt-1 text-2xl font-bold text-white">{topic}</h1>
 		<p class="mt-2 text-sm text-white/60">{$_('discussion.introText')}</p>
 
@@ -592,7 +596,9 @@
 				class="mt-3 flex items-start justify-between gap-3 rounded-lg border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-100"
 			>
 				<span>{submitNotice}</span>
-				<button type="button" class="text-amber-200/70" onclick={() => (submitNotice = null)}>✕</button>
+				<button type="button" class="text-amber-200/70" onclick={() => (submitNotice = null)}
+					>✕</button
+				>
 			</div>
 		{/if}
 

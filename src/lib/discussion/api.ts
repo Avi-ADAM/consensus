@@ -348,8 +348,17 @@ export async function listArguments(
 export async function createArgument(
 	input: CreateArgumentInput,
 	fetch: FetchLike = globalThis.fetch
-): Promise<void> {
-	await sendToSer({ ...input, ...publishedNow() }, 'CreateArgument', 0, 0, false, fetch);
+): Promise<string | null> {
+	const res = await sendToSer<any>(
+		{ ...input, ...publishedNow() },
+		'CreateArgument',
+		0,
+		0,
+		false,
+		fetch
+	);
+	const id = res?.data?.createArgument?.data?.id ?? res?.id;
+	return id ? String(id) : null;
 }
 
 export async function supportArgument(

@@ -301,6 +301,7 @@
     "myPlacesHint": "From the agreement you signed and your account"
   },
   "arguments": {
+    "saveError": "Saving the argument failed. Your text is kept here — try again.",
     "close": "Close",
     "loading": "Loading…",
     "pros": "Pros",
