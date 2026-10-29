@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { parseBridgePayload } from '$lib/discussion/bridge';
+import { buildBridgeSeed, parseBridgePayload } from '$lib/discussion/bridge';
 import { listIssues, loadDiscussionBySource, type LoadedDiscussion } from '$lib/discussion/api';
 import {
 	payloadFromDiscussion,
@@ -30,10 +30,11 @@ export const load: PageLoad = async ({ url, fetch }) => {
 	if (!existing) return { payload, repair: null };
 
 	const id = existing.meta.id;
-	const positions = seedPositionsOf(existing);
+	const repairPayload = payloadFromDiscussion(existing, payload);
+	const positions = seedPositionsOf(existing, buildBridgeSeed(repairPayload));
 	const issues = positions ? await listIssues(id, fetch).catch(() => []) : [];
 	if (!positions || issues.length > 0) redirect(303, `/negotiation/${id}`);
 
 	const repair: { id: string; positions: SeedPositions } = { id, positions };
-	return { payload: payloadFromDiscussion(existing, payload), repair };
+	return { payload: repairPayload, repair };
 };

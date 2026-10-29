@@ -4,7 +4,8 @@ import {
 	listClauses,
 	listIssues,
 	updatePositionLocation,
-	type LoadedDiscussion
+	type LoadedDiscussion,
+	type OpinionInput
 } from './api';
 import { ORIGINAL_STANCE, PROPOSED_STANCE, type BridgePayload, type BridgeSeed } from './bridge';
 import { locationFromClauses } from './scale';
@@ -79,14 +80,21 @@ export async function seedBridgeTerms(
 }
 
 /**
- * The two seed positions of a bridged discussion, told apart by the stance
- * they were created at (see buildBridgeSeed).
+ * The two seed positions of a bridged discussion, told apart by the heading
+ * the seed gave them — the backend does not keep their selfPlacement, so the
+ * stance is only a fallback (see buildBridgeSeed).
  */
-export function seedPositionsOf(discussion: LoadedDiscussion): SeedPositions | null {
-	const at = (stance: number) =>
-		discussion.opinions.find((o) => o.selfPlacement === stance)?.id ?? null;
-	const original = at(ORIGINAL_STANCE);
-	const proposed = at(PROPOSED_STANCE);
+export function seedPositionsOf(
+	discussion: LoadedDiscussion,
+	seed: BridgeSeed
+): SeedPositions | null {
+	const find = (opinion: OpinionInput, stance: number) =>
+		(
+			discussion.opinions.find((o) => o.heading === opinion.heading) ??
+			discussion.opinions.find((o) => o.selfPlacement === stance)
+		)?.id ?? null;
+	const original = find(seed.originalOpinion, ORIGINAL_STANCE);
+	const proposed = find(seed.proposedOpinion, PROPOSED_STANCE);
 	return original && proposed && original !== proposed ? { original, proposed } : null;
 }
 

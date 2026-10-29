@@ -136,13 +136,25 @@ describe('seedBridgeTerms', () => {
 });
 
 describe('seedPositionsOf', () => {
-	it('tells the seed positions apart by their stance', () => {
+	const seed = buildBridgeSeed(payload);
+	const named = (id: string, heading: string) => ({ ...opinion(id), heading });
+
+	it('finds the seed positions by the heading the seed gave them', () => {
+		const d = discussion([
+			named('b', seed.proposedOpinion.heading),
+			opinion('x'),
+			named('a', seed.originalOpinion.heading)
+		]);
+		expect(seedPositionsOf(d, seed)).toEqual({ original: 'a', proposed: 'b' });
+	});
+
+	it('falls back to the stance when a heading was edited', () => {
 		const d = discussion([opinion('b', 100), opinion('x'), opinion('a', 0)]);
-		expect(seedPositionsOf(d)).toEqual({ original: 'a', proposed: 'b' });
+		expect(seedPositionsOf(d, seed)).toEqual({ original: 'a', proposed: 'b' });
 	});
 
 	it('is null when a side is missing', () => {
-		expect(seedPositionsOf(discussion([opinion('a', 0)]))).toBeNull();
+		expect(seedPositionsOf(discussion([opinion('a', 0)]), seed)).toBeNull();
 	});
 });
 
