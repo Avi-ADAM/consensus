@@ -263,6 +263,19 @@ export interface AgreedTerm {
 }
 
 /**
+ * The value of a text term: a term both sides already agreed on keeps its
+ * original value; otherwise the clause wording, without the "label: " prefix
+ * the seed (and the synthesis) write — it must not leak into the source field.
+ */
+function textValue(field: BridgeField, body: string | null): string | number | null {
+	if (!fieldChanged(field)) return field.original;
+	if (!body) return null;
+	const prefix = `${field.label.trim()}:`;
+	const text = body.trim();
+	return text.startsWith(prefix) ? text.slice(prefix.length).trim() || null : text;
+}
+
+/**
  * Translate one position (typically the accepted synthesis) back into concrete
  * terms for the source object: per term, average the position's clause stances
  * on the matching issue and interpolate. Terms the position never addressed
@@ -292,8 +305,7 @@ export function agreementFromPosition(
 		}
 		const stance = own.reduce((s, c) => s + c.stanceValue, 0) / own.length;
 		const body = own[0].body || null;
-		const value =
-			field.kind === 'text' ? (body ?? stanceToValue(field, stance)) : stanceToValue(field, stance);
+		const value = field.kind === 'text' ? textValue(field, body) : stanceToValue(field, stance);
 		return { key: field.key, label: field.label, kind: field.kind, value, body, stance };
 	});
 }

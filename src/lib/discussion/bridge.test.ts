@@ -178,6 +178,27 @@ describe('agreementFromPosition + return URL', () => {
 		expect(terms[1]).toMatchObject({ key: 'descrip', value: 'ניסוח מאוזן שמשלב את שתי הגרסאות' });
 	});
 
+	it('strips the "label: " prefix from text terms', () => {
+		const prefixed = [{ ...clauses[1], body: 'תיאור: ניסוח מאוזן' }];
+		const terms = agreementFromPosition(meta, issues, prefixed, 'synth');
+		expect(terms[1].value).toBe('ניסוח מאוזן');
+	});
+
+	it('keeps the original value of a text term both sides agreed on', () => {
+		const name: BridgeField = {
+			key: 'name',
+			label: 'שם',
+			kind: 'text',
+			original: 'מקרן',
+			proposed: 'מקרן'
+		};
+		const agreedMeta: SourceMeta = { ...meta, fields: [name] };
+		const nameIssue: Issue[] = [{ id: 'i3', title: 'שם', order: 0, origin: 'human' }];
+		const reworded = [{ ...clauses[1], issueId: 'i3', body: 'שם: מקרן משותף' }];
+		const terms = agreementFromPosition(agreedMeta, nameIssue, reworded, 'synth');
+		expect(terms[0].value).toBe('מקרן');
+	});
+
 	it('returns null values for terms the position never addressed', () => {
 		const terms = agreementFromPosition(meta, issues, [clauses[0]], 'synth');
 		expect(terms[1].value).toBeNull();
