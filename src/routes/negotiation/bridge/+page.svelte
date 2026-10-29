@@ -3,13 +3,10 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { loginHref } from '$lib/links';
-	import {
-		createDiscussion,
-		createIssue,
-		createClause,
-		updatePositionLocation
-	} from '$lib/discussion/api';
+	import { onMount } from 'svelte';
+	import { createDiscussion } from '$lib/discussion/api';
 	import { buildBridgeSeed, fieldChanged, formatFieldValue } from '$lib/discussion/bridge';
+	import { seedBridgeTerms, type SeedPositions } from '$lib/discussion/bridgeSeed';
 	import { t } from '$lib/i18n';
 	import { _ } from 'svelte-i18n';
 
@@ -20,14 +17,43 @@
 
 	let busy = $state(false);
 	let error = $state<string | null>(null);
+	/**
+	 * A discussion that exists but whose terms are not (all) seeded yet — from
+	 * the loader, or from a create below that failed part-way. Retrying seeds
+	 * only what is missing instead of opening a second discussion.
+	 */
+	let pending = $state<{ id: string; positions: SeedPositions } | null>(null);
+
+	onMount(() => {
+		if (data.repair && canCreate) {
+			pending = data.repair;
+			void open();
+		}
+	});
+
+	async function complete(target: { id: string; positions: SeedPositions }) {
+		if (!payload) return;
+		const { failed } = await seedBridgeTerms(target.id, target.positions, buildBridgeSeed(payload));
+		if (failed > 0) {
+			error = t('bridge.errorSeed', { count: failed });
+			return;
+		}
+		pending = null;
+		await goto(resolve('/negotiation/[id]', { id: target.id }));
+	}
 
 	async function open() {
 		if (!payload || busy) return;
 		busy = true;
 		error = null;
 
-		const seed = buildBridgeSeed(payload);
 		try {
+			if (pending) {
+				await complete(pending);
+				return;
+			}
+
+			const seed = buildBridgeSeed(payload);
 			const result = await createDiscussion({
 				topic: seed.topic,
 				description: seed.description,
@@ -49,52 +75,10 @@
 
 			// Seed issues and clauses deterministically — the terms are known, so
 			// no AI pass is needed; the assistant tools take over inside the
-			// discussion. Best-effort per item: a failed clause leaves a gap the
-			// panel can fill later.
-			const issueIdByTitle: Record<string, string> = {};
-			for (let i = 0; i < seed.issueTitles.length; i++) {
-				const title = seed.issueTitles[i];
-				const id = await createIssue({
-					negotiationId: result.id,
-					title,
-					order: i,
-					origin: 'human'
-				}).catch(() => null);
-				if (id) issueIdByTitle[title] = id;
-			}
-
-			const [originalId, proposedId] = result.positionIds;
-			const sums = { original: { sum: 0, n: 0 }, proposed: { sum: 0, n: 0 } };
-			for (const clause of seed.clauses) {
-				const positionId = clause.side === 'original' ? originalId : proposedId;
-				const saved = await createClause({
-					negotiationId: result.id,
-					positionId,
-					issueId: issueIdByTitle[clause.issueTitle] ?? null,
-					body: clause.body,
-					stanceValue: clause.stanceValue,
-					origin: 'human'
-				}).catch(() => null);
-				if (saved) {
-					sums[clause.side].sum += clause.stanceValue;
-					sums[clause.side].n += 1;
-				}
-			}
-
-			if (sums.original.n > 0) {
-				await updatePositionLocation(
-					originalId,
-					Math.round(sums.original.sum / sums.original.n)
-				).catch(() => {});
-			}
-			if (sums.proposed.n > 0) {
-				await updatePositionLocation(
-					proposedId,
-					Math.round(sums.proposed.sum / sums.proposed.n)
-				).catch(() => {});
-			}
-
-			await goto(resolve('/negotiation/[id]', { id: result.id }));
+			// discussion.
+			const [original, proposed] = result.positionIds;
+			pending = { id: result.id, positions: { original, proposed } };
+			await complete(pending);
 		} catch {
 			error = t('bridge.errorCreate');
 		} finally {
@@ -192,7 +176,11 @@
 					disabled={busy}
 					class="mt-6 w-full rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:bg-violet-500 disabled:opacity-40"
 				>
-					{busy ? t('bridge.creating') : t('bridge.create')}
+					{#if pending}
+						{busy ? t('bridge.completing') : t('bridge.retrySeed')}
+					{:else}
+						{busy ? t('bridge.creating') : t('bridge.create')}
+					{/if}
 				</button>
 			</div>
 		{/if}

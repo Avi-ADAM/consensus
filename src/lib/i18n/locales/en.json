@@ -188,6 +188,9 @@
     "create": "Open Bridge Discussion",
     "creating": "Creating discussion…",
     "errorCreate": "Failed to create bridge discussion. Make sure the server is connected and try again.",
+    "errorSeed": "The discussion was opened, but some of its terms were not saved ({count} writes failed). Try completing it again — only what is missing will be created.",
+    "retrySeed": "Complete the discussion terms",
+    "completing": "Completing the discussion terms…",
     "bar": {
       "title": "Bridge discussion on {title}",
       "hint": "When agreement forms, select the summary proposal and return it to the negotiation page on the main site.",
