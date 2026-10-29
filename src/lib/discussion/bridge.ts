@@ -110,7 +110,10 @@ export function parseBridgePayload(raw: string): BridgePayload | null {
 	const sourceId =
 		typeof p.sourceId === 'string' || typeof p.sourceId === 'number' ? String(p.sourceId) : '';
 	const title = typeof p.title === 'string' ? p.title.trim() : '';
-	if (p.v !== 1 || !sourceType || !sourceId || !title) return null;
+	// A card without a source row once sent String(null) — every such card
+	// would share one discussion, so it is no source at all.
+	const keyless = !sourceId || sourceId === 'null' || sourceId === 'undefined';
+	if (p.v !== 1 || !sourceType || keyless || !title) return null;
 
 	const fields = (Array.isArray(p.fields) ? p.fields : [])
 		.map(asField)

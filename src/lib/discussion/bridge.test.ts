@@ -79,6 +79,7 @@ describe('bridge payload encode/parse', () => {
 		expect(parseBridgePayload(encodeBridgePayload({ ...payload(), v: 2 } as never))).toBeNull();
 		expect(parseBridgePayload(encodeBridgePayload({ ...payload(), fields: [] }))).toBeNull();
 		expect(parseBridgePayload(encodeBridgePayload({ ...payload(), title: '' }))).toBeNull();
+		expect(parseBridgePayload(encodeBridgePayload({ ...payload(), sourceId: 'null' }))).toBeNull();
 	});
 
 	it('drops malformed fields and non-https return URLs', () => {
