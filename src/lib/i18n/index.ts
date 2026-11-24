@@ -2,14 +2,15 @@ import { browser } from '$app/environment';
 import { init, register, _, locale, waitLocale } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
-export type Locale = 'he' | 'en' | 'ar';
+export type Locale = 'he' | 'en' | 'ar' | 'ru';
 export const RTL_LOCALES: Locale[] = ['he', 'ar'];
-export const SUPPORTED_LOCALES: Locale[] = ['he', 'en', 'ar'];
+export const SUPPORTED_LOCALES: Locale[] = ['he', 'en', 'ar', 'ru'];
 export const DEFAULT_LOCALE: Locale = 'he';
 
 register('he', () => import('./locales/he.json'));
 register('en', () => import('./locales/en.json'));
 register('ar', () => import('./locales/ar.json'));
+register('ru', () => import('./locales/ru.json'));
 
 export function setupI18n(initialLocale: string = DEFAULT_LOCALE) {
 	const safeLocale = SUPPORTED_LOCALES.includes(initialLocale as Locale)

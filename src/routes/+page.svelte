@@ -89,7 +89,7 @@
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta property="og:image:alt" content="consensus" />
-	<meta property="og:locale" content={$locale === 'he' ? 'he_IL' : $locale === 'ar' ? 'ar_IL' : 'en_US'} />
+	<meta property="og:locale" content={$locale === 'he' ? 'he_IL' : $locale === 'ar' ? 'ar_IL' : $locale === 'ru' ? 'ru_RU' : 'en_US'} />
 
 	<!-- Twitter / X Card -->
 	<meta name="twitter:card" content="summary_large_image" />

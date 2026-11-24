@@ -1,6 +1,6 @@
 import type { LayoutServerLoad } from './$types';
 
-const SUPPORTED = ['he', 'en', 'ar'];
+const SUPPORTED = ['he', 'en', 'ar', 'ru'];
 
 export const load: LayoutServerLoad = ({ locals, cookies }) => {
 	const cookieLocale = cookies.get('locale');

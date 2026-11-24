@@ -11,7 +11,7 @@
 	// The home page carries its own hero nav; every other page gets the header.
 	let showHeader = $derived(page.route.id !== '/' && page.route.id !== null);
 
-	const langLabels: Record<Locale, string> = { he: 'עברית', ar: 'العربية', en: 'English' };
+	const langLabels: Record<Locale, string> = { he: 'עברית', ar: 'العربية', en: 'English', ru: 'Русский' };
 
 	let dir = $derived<'rtl' | 'ltr'>(isRTL($locale ?? undefined) ? 'rtl' : 'ltr');
 	// isRTL accepts string | undefined, $locale can be null so we coerce

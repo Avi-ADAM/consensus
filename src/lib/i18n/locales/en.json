@@ -20,12 +20,13 @@
   "lang": {
     "he": "עברית",
     "ar": "العربية",
-    "en": "English"
+    "en": "English",
+    "ru": "Русский"
   },
   "home": {
     "pageTitle": "consensus · One Voice — Dispute Resolution Platform",
     "pageDescription": "AI platform for managing disputes in a structured and intelligent way. Define a topic, propose positions, and AI finds the formula everyone can live with.",
-    "badge": "Open to take part · in Hebrew, Arabic and English",
+    "badge": "Open to take part · in Hebrew, Arabic, English and Russian",
     "heroTitle1": "When you get into details",
     "heroTitle2": "always",
     "heroTitle3": "you can find agreement",
@@ -56,7 +57,7 @@
       },
       "rtl": {
         "title": "RTL first",
-        "desc": "Hebrew, Arabic and English — full user experience in every language"
+        "desc": "Hebrew, Arabic, English and Russian — full user experience in every language"
       },
       "realtime": {
         "title": "Instant update",
@@ -107,8 +108,8 @@
     },
     "highlights": {
       "languages": {
-        "value": "3",
-        "label": "languages — Hebrew · Arabic · English"
+        "value": "4",
+        "label": "languages — Hebrew · Arabic · English · Russian"
       },
       "ai": {
         "value": "AI",

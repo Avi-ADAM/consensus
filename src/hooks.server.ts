@@ -2,7 +2,7 @@ import type { Handle } from '@sveltejs/kit';
 import { resolveUser } from '$lib/server/auth';
 
 const RTL_LOCALES = new Set(['he', 'ar']);
-const SUPPORTED_LOCALES = new Set(['he', 'en', 'ar']);
+const SUPPORTED_LOCALES = new Set(['he', 'en', 'ar', 'ru']);
 const DEFAULT_LOCALE = 'he';
 
 export const handle: Handle = async ({ event, resolve }) => {
