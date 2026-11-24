@@ -8,6 +8,18 @@ const DEFAULT_LOCALE = 'he';
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.user = resolveUser(event.cookies);
 
+	// A shared link can pick the language: /?lang=ru. The choice is stored in
+	// the locale cookie so it sticks after the visitor moves on from that link.
+	const urlLocale = event.url.searchParams.get('lang');
+	if (urlLocale && SUPPORTED_LOCALES.has(urlLocale)) {
+		event.cookies.set('locale', urlLocale, {
+			path: '/',
+			maxAge: 31536000,
+			httpOnly: false,
+			sameSite: 'lax'
+		});
+	}
+
 	const cookieLocale = event.cookies.get('locale');
 	const locale =
 		cookieLocale && SUPPORTED_LOCALES.has(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
